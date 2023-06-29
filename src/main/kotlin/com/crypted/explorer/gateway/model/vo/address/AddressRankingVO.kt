@@ -8,5 +8,5 @@ class AddressRankingVO : Serializable {
     var balance: String? = null
     var symbol: String? = null
     var percentage: String? = null
-    var txCount: Int? = null
+    var txCount: Int? = 0
 }

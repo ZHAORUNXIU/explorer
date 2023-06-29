@@ -28,13 +28,13 @@ class AddressDO : Serializable {
     var balance: String? = null
 
     @Column(name = "nonce")
-    var nonce: Int? = null
+    var nonce: Int? = 0
 
     @Column(name = "public_name")
     var publicName: String? = null
 
     @Column(name = "is_contract")
-    var isContract: Int? = null
+    var isContract: Int? = 0
 
     @Column(name = "created_at")
     var createdAt: Date? = null

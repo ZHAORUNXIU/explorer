@@ -1,5 +1,6 @@
-package com.crypted.kssupport.config
+package com.crypted.explorer.common.repository.config
 
+import com.crypted.explorer.common.repository.BaseMongoRepositoryImpl
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.client.MongoClient
@@ -8,7 +9,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.io.ClassPathResource
 import org.springframework.data.mongodb.MongoDatabaseFactory
 import org.springframework.data.mongodb.MongoTransactionManager
 import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration
@@ -26,7 +26,8 @@ import javax.net.ssl.TrustManagerFactory
 @Configuration
 @EnableMongoRepositories(
     basePackages = ["com.crypted.explorer.service"],
-//    mongoTemplateRef = "mongoTemplate",
+//        repositoryBaseClass = BaseMongoRepositoryImpl::class,
+    mongoTemplateRef = "mongoTemplate",
 )
 class DocumentDatasourceConfig : AbstractMongoClientConfiguration() {
 
@@ -87,11 +88,11 @@ class DocumentDatasourceConfig : AbstractMongoClientConfiguration() {
         return MongoClients.create(mongoClientSettings)
     }
 
-//    override fun mongoTemplate(databaseFactory: MongoDatabaseFactory, converter: MappingMongoConverter): MongoTemplate {
-//        return MongoTemplate(
-//            mongoClient(), databaseName
-//        )
-//    }
+    override fun mongoTemplate(databaseFactory: MongoDatabaseFactory, converter: MappingMongoConverter): MongoTemplate {
+        return MongoTemplate(
+            mongoClient(), databaseName
+        )
+    }
 
     @Bean
     fun mongoTransactionManager(databaseFactory: MongoDatabaseFactory): MongoTransactionManager{

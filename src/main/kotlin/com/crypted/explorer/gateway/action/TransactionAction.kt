@@ -3,17 +3,13 @@ package com.crypted.explorer.gateway.action
 import com.crypted.explorer.api.service.transaction.TransactionService
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Log
-import com.crypted.explorer.gateway.model.resp.address.AddressRankingResp
-import com.crypted.explorer.gateway.model.resp.transaction.TransactionHistoryResp
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionListResp
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionInfoResp
+import com.crypted.explorer.gateway.model.vo.transaction.TransactionHistoryVO
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import javax.annotation.Resource
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
@@ -32,26 +28,37 @@ class TransactionAction {
     private val transactionService: TransactionService? = null
 
     @GetMapping("/list")
-    fun getlist(@RequestParam(required = true) @NotNull @Min(0) pageNumber: Int,
-             @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<TransactionListResp?> {
+    fun getList(@RequestParam(required = false) fromAddress: String?,
+                @RequestParam(required = false) toAddress: String?,
+                @RequestParam(required = false) @Min(1) blockNumber: Int?,
+                @RequestParam(required = true) @NotNull @Min(1) pageNumber: Int,
+                @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<TransactionListResp?> {
 
         LOG.info(Log.format("success", Log.kv("api", "transaction/list")))
 
-        var result: Result<TransactionListResp?> = transactionService!!.getListByPage(pageNumber, pageSize)
+        val result: Result<TransactionListResp?> = transactionService!!.getListByPage(fromAddress, toAddress, blockNumber, pageNumber, pageSize)
 
         return Result.success(result.data)
     }
 
-    @GetMapping("/info")
-    fun getInfoByTxHash(@RequestParam(required = true) @NotNull txHash: String): Result<TransactionInfoResp?> {
-        LOG.info(Log.format("success", Log.kv("api", "transaction/info")))
-        return Result.success(null)
+    @GetMapping("/{txHash}")
+    fun getInfoByTxHash(@PathVariable("txHash") @NotNull txHash: String): Result<TransactionInfoResp?> {
+
+        LOG.info(Log.format("success", Log.kv("api", "transaction/")))
+
+        val result: Result<TransactionInfoResp?> = transactionService!!.getInfoByTxHash(txHash)
+
+        return Result.success(result.data)
     }
 
     @GetMapping("/history")
-    fun getHistory(): Result<TransactionHistoryResp?> {
+    fun getHistory(): Result<List<TransactionHistoryVO>?> {
+
         LOG.info(Log.format("success", Log.kv("api", "transaction/history")))
-        return Result.success(null)
+
+        val result: Result<List<TransactionHistoryVO>?> = transactionService!!.getHistory()
+
+        return Result.success(result.data)
     }
 
 }

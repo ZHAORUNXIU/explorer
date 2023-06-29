@@ -20,22 +20,22 @@ interface Constant {
         const val USER_ID = "userId"
 
         /**
-         * 默认北京时间东八区
+         * default time zone
          */
-        val DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT+8:00")
+        val DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT+9:00")
 
         /**
-         * 用户tokenKey
+         * user tokenKey
          */
-        const val LOGIN_TOKEN = "RESUME-TOKEN"
+        const val LOGIN_TOKEN = "EXPLORER-TOKEN"
 
         /**
-         * 0开头正则
+         * regex zero start
          */
         const val REGEX_ZERO_START = "^0+"
 
         /**
-         * 默认的验证码
+         * default code
          */
         const val DEFAULT_CODE = "123456"
         const val EXPIRED_MAX_TIME_STAMP = 2840112000000L

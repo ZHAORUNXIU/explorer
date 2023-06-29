@@ -4,8 +4,8 @@ import java.io.Serializable
 
 class TransactionInfoResp : Serializable {
     var txHash: String? = null
-    var blockNumber: Int? = null
-    var timestamp: Int? = null
+    var blockNumber: Int? = 0
+    var timestamp: Int? = 0
     var from: String? = null
     var to: String? = null
     var value: String? = null

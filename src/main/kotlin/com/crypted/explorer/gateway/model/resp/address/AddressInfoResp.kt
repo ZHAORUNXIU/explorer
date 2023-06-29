@@ -7,6 +7,6 @@ class AddressInfoResp : Serializable {
     var address: String? = null
     var balance: String? = null
     var symbol: String? = null
-    var tokenCount: Int? = null
-    var tokenHoldings: List<TokenVO>? = null
+    var tokenCount: Int? = 0
+    var tokenHoldings: List<TokenVO?> = emptyList()
 }

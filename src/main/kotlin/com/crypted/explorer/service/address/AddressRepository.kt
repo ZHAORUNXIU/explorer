@@ -10,8 +10,8 @@ import org.springframework.stereotype.Repository
  * @date 2023-06-20 11:00:00
  */
 @Repository
-interface AddressRepository : JpaRepository<AddressDO?, Long?> {
+interface AddressRepository : JpaRepository<AddressDO, Long> {
 
-    //    Optional<AddressDO> getById(Long id);
-    //    List<AddressDO> findByIdInAndState(List<Long> ids, Integer state);
+    fun findByAddress(address: String): AddressDO?
+
 }

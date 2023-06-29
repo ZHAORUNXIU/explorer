@@ -14,24 +14,24 @@ import java.util.*
 @Document(collection = "blocks")
 class BlockMongoDO : Serializable {
     @Id
-    private val id: ObjectId? = null
-    private val hash: String? = null
-    private val __v = 0
-    private val createdAt: Date? = null
-    private val baseFeePerGas: String? = null
-    private val blockReward: String? = null
-    private val burntFee: String? = null
-    private val extraData: String? = null
-    private val fee: String? = null
-    private val gasLimit: String? = null
-    private val gasUsed: String? = null
-    private val number = 0
-    private val parentHash: String? = null
-    private val referralFee: String? = null
-    private val rewardFee: String? = null
-    private val staticBlockReward: String? = null
-    private val timestamp = 0
-    private val updatedAt: Date? = null
+    var id: ObjectId? = null
+    var hash: String? = null
+    var __v = 0
+    var createdAt: Date? = null
+    var baseFeePerGas: String? = null
+    var blockReward: String? = null
+    var burntFee: String? = null
+    var extraData: String? = null
+    var fee: String? = null
+    var gasLimit: String? = null
+    var gasUsed: String? = null
+    var number = 0
+    var parentHash: String? = null
+    var referralFee: String? = null
+    var rewardFee: String? = null
+    var staticBlockReward: String? = null
+    var timestamp = 0
+    var updatedAt: Date? = null
 
     companion object {
         private const val serialVersionUID = 8718060005385905866L
