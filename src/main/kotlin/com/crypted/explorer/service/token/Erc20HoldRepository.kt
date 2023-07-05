@@ -12,6 +12,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface Erc20HoldRepository : JpaRepository<Erc20HoldDO, Long> {
 
-    fun findByTokenId(tokenId: Long): Erc20HoldDO
+    fun findByHolder(holder: String): List<Erc20HoldDO>?
 
 }

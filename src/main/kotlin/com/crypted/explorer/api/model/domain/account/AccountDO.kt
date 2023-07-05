@@ -1,4 +1,4 @@
-package com.crypted.explorer.api.model.domain.address
+package com.crypted.explorer.api.model.domain.account
 
 import org.hibernate.annotations.DynamicInsert
 import org.hibernate.annotations.DynamicUpdate
@@ -15,7 +15,7 @@ import javax.persistence.*
 @DynamicUpdate
 @Entity
 @Table(name = "account")
-class AddressDO : Serializable {
+class AccountDO : Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -30,8 +30,8 @@ class AddressDO : Serializable {
     @Column(name = "nonce")
     var nonce: Int? = 0
 
-    @Column(name = "public_name")
-    var publicName: String? = null
+//    @Column(name = "public_name")
+//    var publicName: String? = null
 
     @Column(name = "is_contract")
     var isContract: Int? = 0

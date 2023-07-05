@@ -1,14 +1,15 @@
 package com.crypted.explorer.gateway.action
 
 import com.crypted.explorer.api.service.account.AccountService
-import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.constant.AccountCode
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Log
-import com.crypted.explorer.gateway.model.resp.token.TokenInfoResp
-import com.crypted.explorer.gateway.model.resp.token.TokenListResp
+import com.crypted.explorer.gateway.model.resp.account.AccountInfoResp
+import com.crypted.explorer.gateway.model.resp.account.AccountRankingResp
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.extensions.Extension
+import io.swagger.v3.oas.annotations.extensions.ExtensionProperty
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -22,53 +23,53 @@ import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
 
 @RestController
-@RequestMapping(value = ["/v1/token"])
+@RequestMapping(value = ["/v1/account"])
 @Validated
 @Component
-@Tag(name = "Token Service API", description = "API endpoints related to token operations")
-class TokenAction {
+@Tag(name = "Account Service API", description = "API endpoints related to account operations")
+class AccountAction {
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(TokenAction::class.java)
+        private val LOG = LoggerFactory.getLogger(AccountAction::class.java)
     }
-
-    @Resource
-    private val tokeService: TokenService? = null
 
     @Resource
     private val accountService: AccountService? = null
 
-    @GetMapping("/list")
-    @Operation(summary = "Get list", description = "Retrieve token list based on the provided pageNumber and pageSize")
+    @GetMapping("/ranking")
+    @Operation(summary = "Get ranking", description = "Retrieve account ranking based on the provided pageNumber and pageSize")
     @ApiResponse(responseCode = "200", description = "Success")
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
-    fun getList(@Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(0) pageNumber: Int,
-                @Parameter(description = "pageSize", required = true) @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<TokenListResp?> {
+    fun getRanking(@Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(0) pageNumber: Int,
+                   @Parameter(description = "pageSize", required = true) @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<AccountRankingResp?> {
 
-        LOG.info(Log.format("success", Log.kv("api", "/token/list")))
+        LOG.info(Log.format("success", Log.kv("api", "account/ranking")))
 
-        val result: Result<TokenListResp?> = tokeService!!.getListByPage(pageNumber, pageSize)
+        val result: Result<AccountRankingResp?> = accountService!!.getRankingByPage(pageNumber, pageSize)
 
         return Result.success(result.data)
     }
 
-    @GetMapping("/{contractAddress}")
-    @Operation(summary = "Get info by contract address", description = "Retrieve contract account details based on the provided contract address")
+    /**
+     * EOA
+     */
+    @GetMapping("/{address}")
+    @Operation(summary = "Get info by address", description = "Retrieve account info based on the provided address")
     @ApiResponse(responseCode = "200", description = "Success")
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
-    fun getInfoByContractAddress(@Parameter(description = "CA address", required = true) @PathVariable("contractAddress") @NotNull contractAddress: String): Result<TokenInfoResp?> {
+    fun getInfoByAddress(@Parameter(description = "EOA address", required = true) @PathVariable("address") @NotNull address: String): Result<AccountInfoResp?> {
 
-        LOG.info(Log.format("success", Log.kv("api", "token/")))
+        LOG.info(Log.format("success", Log.kv("api", "account/")))
 
-        // Contract account
-        if (accountService!!.checkAccountIsContract(contractAddress).data == false)
-            return Result.failure(AccountCode.NOT_CONTRACT_ACCOUNT)
+        // EOA
+        if (accountService!!.checkAccountIsContract(address).data == true)
+            return Result.failure(AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT)
 
-        val result: Result<TokenInfoResp?> = tokeService!!.getInfoByContractAddress(contractAddress)
+        val result: Result<AccountInfoResp?> = accountService.getInfoByAddress(address)
 
         return Result.success(result.data)
     }

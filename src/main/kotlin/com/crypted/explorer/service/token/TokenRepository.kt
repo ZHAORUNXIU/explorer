@@ -12,6 +12,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface TokenRepository : JpaRepository<TokenDO, Long> {
 
-    fun findByAddress(address: String): List<TokenDO>?
+    fun findByAddress(address: String): TokenDO?
 
 }

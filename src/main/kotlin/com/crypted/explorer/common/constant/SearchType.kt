@@ -2,7 +2,7 @@ package com.crypted.explorer.common.constant
 
 enum class SearchType(val value: Int) {
 
-    ADDRESS(0),
+    ACCOUNT(0),
 
     BLOCK(1),
 

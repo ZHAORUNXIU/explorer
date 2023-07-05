@@ -1,6 +1,7 @@
 package com.crypted.explorer.common.model
 
 import com.crypted.explorer.common.constant.Code
+import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable
 
 data class Result<T>(

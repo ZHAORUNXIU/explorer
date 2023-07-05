@@ -1,4 +1,4 @@
-package com.crypted.explorer.gateway.model.vo.address
+package com.crypted.explorer.gateway.model.vo.token
 
 import java.io.Serializable
 

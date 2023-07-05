@@ -6,6 +6,12 @@ import com.crypted.explorer.common.util.Log
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionListResp
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionInfoResp
 import com.crypted.explorer.gateway.model.vo.transaction.TransactionHistoryVO
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
@@ -18,6 +24,7 @@ import javax.validation.constraints.NotNull
 @RequestMapping(value = ["/v1/transaction"])
 @Validated
 @Component
+@Tag(name = "Transaction Service API", description = "API endpoints related to transaction operations")
 class TransactionAction {
 
     companion object {
@@ -28,11 +35,16 @@ class TransactionAction {
     private val transactionService: TransactionService? = null
 
     @GetMapping("/list")
-    fun getList(@RequestParam(required = false) fromAddress: String?,
-                @RequestParam(required = false) toAddress: String?,
-                @RequestParam(required = false) @Min(1) blockNumber: Int?,
-                @RequestParam(required = true) @NotNull @Min(1) pageNumber: Int,
-                @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<TransactionListResp?> {
+    @Operation(summary = "Get list", description = "Retrieve transaction list based on the provided conditions")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    fun getList(@Parameter(description = "fromAddress", required = false, allowEmptyValue = true) @RequestParam(required = false) fromAddress: String?,
+                @Parameter(description = "toAddress", required = false, allowEmptyValue = true) @RequestParam(required = false) toAddress: String?,
+                @Parameter(description = "blockNumber", required = false, allowEmptyValue = true) @RequestParam(required = false) @Min(1) blockNumber: Int?,
+                @Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(1) pageNumber: Int,
+                @Parameter(description = "pageSize", required = true) @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<TransactionListResp?> {
 
         LOG.info(Log.format("success", Log.kv("api", "transaction/list")))
 
@@ -42,7 +54,12 @@ class TransactionAction {
     }
 
     @GetMapping("/{txHash}")
-    fun getInfoByTxHash(@PathVariable("txHash") @NotNull txHash: String): Result<TransactionInfoResp?> {
+    @Operation(summary = "Get info by txHash", description = "Retrieve transaction info based on the provided txHash")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    fun getInfoByTxHash(@Parameter(description = "txHash", required = true) @PathVariable("txHash") @NotNull txHash: String): Result<TransactionInfoResp?> {
 
         LOG.info(Log.format("success", Log.kv("api", "transaction/")))
 
@@ -52,6 +69,11 @@ class TransactionAction {
     }
 
     @GetMapping("/history")
+    @Operation(summary = "Get history", description = "Retrieve transaction histories")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getHistory(): Result<List<TransactionHistoryVO>?> {
 
         LOG.info(Log.format("success", Log.kv("api", "transaction/history")))
