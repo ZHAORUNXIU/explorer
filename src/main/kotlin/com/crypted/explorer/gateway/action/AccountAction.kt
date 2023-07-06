@@ -42,6 +42,7 @@ class AccountAction {
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getRanking(@Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(0) pageNumber: Int,
                    @Parameter(description = "pageSize", required = true) @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<AccountRankingResp?> {
 
@@ -61,13 +62,14 @@ class AccountAction {
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getInfoByAddress(@Parameter(description = "EOA address", required = true) @PathVariable("address") @NotNull address: String): Result<AccountInfoResp?> {
 
         LOG.info(Log.format("success", Log.kv("api", "account/")))
 
         // EOA
         if (accountService!!.checkAccountIsContract(address).data == true)
-            return Result.failure(AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT)
+            return Result.failure(AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.code, AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.message)
 
         val result: Result<AccountInfoResp?> = accountService.getInfoByAddress(address)
 

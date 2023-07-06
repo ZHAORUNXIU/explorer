@@ -44,6 +44,7 @@ class TokenAction {
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getList(@Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(0) pageNumber: Int,
                 @Parameter(description = "pageSize", required = true) @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<TokenListResp?> {
 
@@ -60,13 +61,14 @@ class TokenAction {
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getInfoByContractAddress(@Parameter(description = "CA address", required = true) @PathVariable("contractAddress") @NotNull contractAddress: String): Result<TokenInfoResp?> {
 
         LOG.info(Log.format("success", Log.kv("api", "token/")))
 
         // Contract account
         if (accountService!!.checkAccountIsContract(contractAddress).data == false)
-            return Result.failure(AccountCode.NOT_CONTRACT_ACCOUNT)
+            return Result.failure(AccountCode.NOT_CONTRACT_ACCOUNT.code, AccountCode.NOT_CONTRACT_ACCOUNT.message)
 
         val result: Result<TokenInfoResp?> = tokeService!!.getInfoByContractAddress(contractAddress)
 

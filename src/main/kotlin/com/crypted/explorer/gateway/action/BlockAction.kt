@@ -39,6 +39,7 @@ class BlockAction {
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getList(@Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(0) pageNumber: Int,
                 @Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<BlockListResp?> {
 
@@ -55,6 +56,7 @@ class BlockAction {
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getInfoByBlockNumber(@Parameter(description = "blockNumber", required = true) @PathVariable("blockNumber") @NotNull @Min(0) blockNumber: Int): Result<BlockInfoResp?> {
 
         LOG.info(Log.format("success", Log.kv("api", "block/")))

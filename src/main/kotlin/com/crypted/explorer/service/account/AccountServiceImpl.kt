@@ -51,30 +51,30 @@ class AccountServiceImpl : AccountService {
 
         val totalAddress: Int = accountRepository.count().toInt()
 
-        val qddressRankingResp = AccountRankingResp().apply {
+        val accountRankingResp = AccountRankingResp().apply {
             this.totalPage = MathUtils.ceilDiv(totalAddress, pageSize)
             this.totalAccount = totalAddress
             this.accountRanking = accountRanking
         }
 
-        return Result.success(qddressRankingResp)
+        return Result.success(accountRankingResp)
     }
 
     override fun getInfoByAddress(address: String): Result<AccountInfoResp?> {
 
-        val addressDO: AccountDO? = accountRepository!!.findByAddress(address)
+        val accountDO: AccountDO? = accountRepository!!.findByAddress(address)
 
         val tokenHoldings: List<TokenVO>? = tokenService!!.getTokenHoldingsByHolder(address).data
 
-        val addressInfoResp = AccountInfoResp().apply {
-            this.address = addressDO?.address
-            this.balance = addressDO?.balance
+        val accountInfoResp = AccountInfoResp().apply {
+            this.address = accountDO?.address
+            this.balance = accountDO?.balance
             this.symbol = this@AccountServiceImpl.symbol
             this.tokenCount = tokenHoldings?.size
             this.tokenHoldings = tokenHoldings
         }
 
-        return Result.success(addressInfoResp)
+        return Result.success(accountInfoResp)
     }
 
     override fun checkAccountIsContract(address: String): Result<Boolean> {

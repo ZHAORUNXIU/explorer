@@ -6,6 +6,7 @@ import com.crypted.explorer.api.model.domain.token.Erc721HoldDO
 import com.crypted.explorer.api.model.domain.token.TokenDO
 import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.constant.AccountCode
+import com.crypted.explorer.common.constant.TokenType
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.MathUtils
 import com.crypted.explorer.gateway.model.resp.token.TokenInfoResp
@@ -125,7 +126,7 @@ class TokenServiceImpl : TokenService {
             }
             return Result.success(tokenInfoResp)
         } ?: run {
-            return Result.failure(AccountCode.NOT_CONTRACT_ACCOUNT)
+            return Result.failure(AccountCode.NOT_CONTRACT_ACCOUNT.code, AccountCode.NOT_CONTRACT_ACCOUNT.message)
         }
     }
 

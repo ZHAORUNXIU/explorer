@@ -1,16 +1,8 @@
 package com.crypted.explorer.common.constant
 
-interface AccountCode {
-    companion object {
-        /**
-         * not a externally owned account
-         */
-        const val NOT_EXTERNALLY_OWNED_ACCOUNT = 1001
+enum class AccountCode(val code: Int, val message: String) {
 
-        /**
-         * not a contract account
-         */
-        const val NOT_CONTRACT_ACCOUNT = 1002
+    NOT_EXTERNALLY_OWNED_ACCOUNT(1001, "The account is not a EOA."),
 
-    }
+    NOT_CONTRACT_ACCOUNT(1002, "The account is not a CA.")
 }

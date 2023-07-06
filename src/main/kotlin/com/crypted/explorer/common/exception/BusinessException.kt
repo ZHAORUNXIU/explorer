@@ -1,8 +1,12 @@
 package com.crypted.explorer.common.exception
 
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.ResponseStatus
+
 /**
  * Business Error (Transaction and Business Logic Handling)
  */
+@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 class BusinessException : RuntimeException {
     @JvmField
     var code = 0

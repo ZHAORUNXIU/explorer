@@ -1,9 +1,9 @@
 package com.crypted.explorer.gateway.action
 
 import com.crypted.explorer.api.service.search.SearchService
-import com.crypted.explorer.common.constant.SearchType
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Log
+import com.crypted.explorer.gateway.model.resp.search.SearchTypeResp
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -34,22 +34,21 @@ class SearchAction {
 
     @GetMapping
     @Operation(summary = "Get searching type", description = "Get the searching type of provided param")
-    @ApiResponse(responseCode = "200", description = "Success", content = [Content(
-        mediaType = MediaType.APPLICATION_JSON_VALUE,
-        schema = Schema(
-            allowableValues = ["0", "1", "2", "3"]
-        )
-    )])
-    @ApiResponse(responseCode = "500", description = "System Error")
-    @ApiResponse(responseCode = "501", description = "Invalid Request")
-    @ApiResponse(responseCode = "502", description = "Invalid Parameter")
-    fun getSearchType(@Parameter(description = "param", required = true) @RequestParam(required = true) @NotNull param: String): Result<Int> {
+    @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    fun getSearchType(@Parameter(description = "param", required = true) @RequestParam(required = true) @NotNull param: String): Result<SearchTypeResp> {
 
         LOG.info(Log.format("success", Log.kv("api", "/search/")))
 
-        val result: Result<Int> = searchService!!.getSearchTypeByParam(param)
+        val searchType: String = searchService!!.getSearchTypeByParam(param).data.toString()
+        val searchTypeResp = SearchTypeResp().apply {
+            this.searchType = searchType
+        }
 
-        return Result.success(result.data)
+        return Result.success(searchTypeResp)
     }
 
 }

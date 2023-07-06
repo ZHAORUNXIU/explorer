@@ -14,7 +14,7 @@ class SearchServiceImpl : SearchService {
 
     private val TX_HASH_PATTERN = "^0x[0-9a-fA-F]{64}$"
 
-    override fun getSearchTypeByParam(param: String): Result<Int> {
+    override fun getSearchTypeByParam(param: String): Result<String> {
 
         val blockNumberRegex = Regex(BLOCK_NUMBER_PATTERN)
         val accountAddressRegex = Regex(ACCOUNT_ADDRESS_PATTERN)

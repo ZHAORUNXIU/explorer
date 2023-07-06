@@ -40,6 +40,7 @@ class TransactionAction {
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getList(@Parameter(description = "fromAddress", required = false, allowEmptyValue = true) @RequestParam(required = false) fromAddress: String?,
                 @Parameter(description = "toAddress", required = false, allowEmptyValue = true) @RequestParam(required = false) toAddress: String?,
                 @Parameter(description = "blockNumber", required = false, allowEmptyValue = true) @RequestParam(required = false) @Min(1) blockNumber: Int?,
@@ -59,6 +60,7 @@ class TransactionAction {
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getInfoByTxHash(@Parameter(description = "txHash", required = true) @PathVariable("txHash") @NotNull txHash: String): Result<TransactionInfoResp?> {
 
         LOG.info(Log.format("success", Log.kv("api", "transaction/")))
@@ -73,7 +75,6 @@ class TransactionAction {
     @ApiResponse(responseCode = "200", description = "Success")
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
-    @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
     fun getHistory(): Result<List<TransactionHistoryVO>?> {
 
         LOG.info(Log.format("success", Log.kv("api", "transaction/history")))

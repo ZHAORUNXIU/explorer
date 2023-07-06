@@ -33,7 +33,7 @@ class WebExceptionHandler {
     private val i18nHelper: I18nHelper? = null
 
     /**
-     * 501 - Bad Request
+     * HttpStatus 400 - Bad Request
      */
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadableException(
@@ -54,7 +54,7 @@ class WebExceptionHandler {
     }
 
     /**
-     * 501 - Unsupported request method
+     * HttpStatus 405 - Method Not Allowed
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
     fun handleHttpRequestMethodNotSupportedException(
@@ -75,7 +75,7 @@ class WebExceptionHandler {
     }
 
     /**
-     * 501 - Unsupported Media Type
+     * HttpStatus 415 - Unsupported Media Type
      */
     @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
     fun handleHttpMediaTypeNotSupportedException(req: HttpServletRequest, res: HttpServletResponse, e: Exception) {
@@ -92,7 +92,7 @@ class WebExceptionHandler {
     }
 
     /**
-     * 502 - Missing parameter exception
+     * 504 - Missing parameter exception
      */
     @ExceptionHandler(MissingServletRequestParameterException::class)
     fun missingServletRequestPartException(
@@ -109,11 +109,11 @@ class WebExceptionHandler {
 //                kv(USER_ID, ReqContext.get().getUserId())
             )
         )
-        write(res, Code.ILLEGAL_PARAM, e.message)
+        write(res, Code.PARAM_MISSING, e.message)
     }
 
     /**
-     * 502 - Method parameter exception
+     * 502 - Method argument exception
      */
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun methodArgumentNotValidException(
@@ -160,7 +160,7 @@ class WebExceptionHandler {
     }
 
     /**
-     * 500 - unknown error
+     * HttpStatus 500 - Internal Server Error (unknown error)
      */
     @ExceptionHandler(Exception::class)
     fun handleException(req: HttpServletRequest, res: HttpServletResponse, e: Exception) {
