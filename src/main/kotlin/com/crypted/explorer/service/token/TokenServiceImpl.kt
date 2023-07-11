@@ -6,6 +6,7 @@ import com.crypted.explorer.api.model.domain.token.Erc721HoldDO
 import com.crypted.explorer.api.model.domain.token.TokenDO
 import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.constant.AccountCode
+import com.crypted.explorer.common.constant.SearchType
 import com.crypted.explorer.common.constant.TokenType
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.MathUtils
@@ -43,6 +44,15 @@ class TokenServiceImpl : TokenService {
 
     @Resource
     private val erc1155HoldRepository: Erc1155HoldRepository? = null
+
+    @Resource
+    private val erc20TransferMongoRepository: Erc20TransferMongoRepository? = null
+
+    @Resource
+    private val erc721TransferMongoRepository: Erc721TransferMongoRepository? = null
+
+    @Resource
+    private val erc1155TransferMongoRepository: Erc1155TransferMongoRepository? = null
 
     override fun getTokenHoldingsByHolder(holder: String): Result<List<TokenVO>?> {
 
@@ -120,8 +130,8 @@ class TokenServiceImpl : TokenService {
                 this.symbol = tokenDO.symbol
                 this.address = tokenDO.address
                 this.totalSupply = tokenDO.supply
-//            this.totalTransfer = tokenDO.  //Int
-//            this.officialSite = tokenDO.
+                this.totalTransfer = getTotalTransfers(tokenDO)
+            this.officialSite = tokenDO.officialSite
                 this.imageUrl = tokenDO.image
             }
             return Result.success(tokenInfoResp)
@@ -137,4 +147,13 @@ class TokenServiceImpl : TokenService {
         return Result.success(contractId?.let { contractRepository!!.findById(it).get().name })
     }
 
+    private fun getTotalTransfers(tokenDO: TokenDO): Int? {
+
+        return when {
+            tokenDO.type == TokenType.ERC20 -> tokenDO.address?.let { erc20TransferMongoRepository!!.countByTokenAddress(it) }
+            tokenDO.type == TokenType.ERC721 -> tokenDO.address?.let { erc721TransferMongoRepository!!.countByTokenAddress(it) }
+            tokenDO.type == TokenType.ERC1155 -> tokenDO.address?.let { erc1155TransferMongoRepository!!.countByTokenAddress(it) }
+            else -> 0
+        }
+    }
 }

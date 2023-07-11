@@ -68,7 +68,7 @@ class TransactionServiceImpl : TransactionService {
 
         val transactionList: List<TransactionListVO?> = transactionMongoDOList.stream().map { transactionMongoDO ->
             val transactionListVO = TransactionListVO()
-//            transactionListVO.status =
+            transactionListVO.status = transactionMongoDO?.status
             transactionListVO.txHash = transactionMongoDO!!.hash
             transactionListVO.method = transactionMongoDO.functionName?: transactionMongoDO.functionSignature
             transactionListVO.blockNumber = transactionMongoDO.blockNumber
@@ -103,6 +103,7 @@ class TransactionServiceImpl : TransactionService {
             this.value = transactionMongoDO?.value
             this.txFee = transactionMongoDO?.fee?.let { MathUtils.convertWeiToEther(it) }
             this.symbol = this@TransactionServiceImpl.symbol
+            this.status = transactionMongoDO?.status
         }
 
         return Result.success(transactionInfoResp)

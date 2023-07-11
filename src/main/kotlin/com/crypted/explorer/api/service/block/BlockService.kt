@@ -9,4 +9,6 @@ interface BlockService {
 
     fun getInfoByBlockNumber(blockNumber: Int): Result<BlockInfoResp?>
 
+    fun getTotalBlockReward(): Result<String>
+
 }

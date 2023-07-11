@@ -20,4 +20,6 @@ class TransactionInfoResp : Serializable {
     var txFee: String? = null
     @Schema(description = "symbol", type = "string")
     var symbol: String? = null
+    @Schema(description = "status 0-failure 1-success null-pending", type = "Int", )
+    var status: Int? = null
 }

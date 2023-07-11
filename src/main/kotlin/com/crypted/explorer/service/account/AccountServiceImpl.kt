@@ -2,6 +2,7 @@ package com.crypted.explorer.service.account
 
 import com.crypted.explorer.api.model.domain.account.AccountDO
 import com.crypted.explorer.api.service.account.AccountService
+import com.crypted.explorer.api.service.block.BlockService
 import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.MathUtils
@@ -31,19 +32,22 @@ class AccountServiceImpl : AccountService {
     @Resource
     private val tokenService: TokenService? = null
 
+    @Resource
+    private val blockService: BlockService? = null
+
     override fun getRankingByPage(pageNumber: Int, pageSize: Int): Result<AccountRankingResp?> {
 
         val pageable: Pageable = PageRequest.of(pageNumber-1, pageSize, Sort.Direction.DESC, RANKING_BY_BALANCE)
         val accountDOList: List<AccountDO?> = accountRepository!!.findAll(pageable).content
+        val totalBlockReward = blockService!!.getTotalBlockReward().data?.toDouble()
         val accountRanking: List<AccountRankingVO> = accountDOList.stream().map { accountDO ->
             val accountRankingVO = AccountRankingVO()
             accountRankingVO.address = accountDO?.address
             accountRankingVO.isContract = accountDO?.isContract == 0
             accountRankingVO.balance = accountDO?.balance
             accountRankingVO.symbol = this@AccountServiceImpl.symbol
-//            accountRankingVO.percentage = accountDO?.
+            accountRankingVO.percentage = (totalBlockReward?.let { accountDO?.balance?.toDouble()?.div(it) }?.times(100)).toString()
             // txCount equals accountDO.nonce
-//            accountRankingVO.txCount = accountDO?.address?.let { transactionService!!.getTransactionAmountByAddress(it).data }
             accountRankingVO.txCount = accountDO?.nonce
             accountRankingVO
         }.toList()

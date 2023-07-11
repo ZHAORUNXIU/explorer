@@ -1,6 +1,7 @@
 package com.crypted.explorer.service.block
 
 import com.crypted.explorer.api.model.domain.block.BlockMongoDO
+import com.crypted.explorer.api.model.domain.block.InflationRatioDO
 import com.crypted.explorer.api.service.block.BlockService
 import com.crypted.explorer.api.service.transaction.TransactionService
 import com.crypted.explorer.common.model.Result
@@ -21,13 +22,16 @@ import kotlin.streams.toList
 @Service
 class BlockServiceImpl : BlockService {
 
-    private val SORT_BY_BLOCK_NUMBER = "blockNumber"
+    private val SORT_BY_BLOCK_NUMBER = "number"
 
     @Value("\${block.symbol}")
     private lateinit var symbol: String
 
     @Resource
     private val blockMongoRepository: BlockMongoRepository? = null
+
+    @Resource
+    private val inflationRatioMongoRepository: InflationRatioMongoRepository? = null
 
     @Resource
     private val transactionService: TransactionService? = null
@@ -60,7 +64,7 @@ class BlockServiceImpl : BlockService {
 
     override fun getInfoByBlockNumber(blockNumber: Int): Result<BlockInfoResp?> {
 
-        val blockMongoDO = blockMongoRepository!!.findByNumber(blockNumber)
+        val blockMongoDO: BlockMongoDO = blockMongoRepository!!.findByNumber(blockNumber)
 
         val blockInfoResp = BlockInfoResp().apply {
             this.blockNumber = blockMongoDO.number
@@ -68,10 +72,32 @@ class BlockServiceImpl : BlockService {
             this.txCount = transactionService!!.getTransactionAmount().data
             this.blockReward = blockMongoDO.blockReward
             this.symbol = this@BlockServiceImpl.symbol
-            this.latestBlock = blockMongoRepository.findTopByOrderByNumberDesc()
+            this.latestBlock = blockMongoRepository.findTopByOrderByNumberDesc().number
         }
 
         return Result.success(blockInfoResp)
+    }
+
+    override fun getTotalBlockReward(): Result<String> {
+
+        val inflationRatioDOList: List<InflationRatioDO> = inflationRatioMongoRepository!!.findAll()
+
+        val sortedList = inflationRatioDOList.sortedBy { it.blockNumber }
+
+        var accumulatedBlockReward = 0.0
+        var previousBlockNumber = 1
+        var staticBlockReward = 0.0
+
+        for (inflationRatioDO in sortedList) {
+            val currentBlockNumber = inflationRatioDO.blockNumber
+
+            accumulatedBlockReward += staticBlockReward * (currentBlockNumber - previousBlockNumber)
+
+            previousBlockNumber = currentBlockNumber
+            staticBlockReward = inflationRatioDO.staticBlockReward?.toDouble() ?: 0.0
+        }
+
+        return Result.success(accumulatedBlockReward.toString())
     }
 }
 

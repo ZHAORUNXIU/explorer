@@ -37,6 +37,9 @@ class TokenDO : Serializable {
     @Column(name = "image")
     var image: String? = null
 
+    @Column(name = "officialSite")
+    var officialSite: String? = null
+
     @Column(name = "type")
     var type: TokenType? = null
 

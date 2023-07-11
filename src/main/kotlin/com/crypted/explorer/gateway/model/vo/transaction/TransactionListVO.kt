@@ -1,5 +1,6 @@
 package com.crypted.explorer.gateway.model.vo.transaction
 
+import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable
 
 class TransactionListVO : Serializable {
@@ -12,5 +13,6 @@ class TransactionListVO : Serializable {
     var value: String? = null
     var txFee: String? = null
     var symbol: String? = null
-    var status: Int? = 1
+    @Schema(description = "status 0-failure 1-success null-pending", type = "Int", )
+    var status: Int? = null
 }
