@@ -19,7 +19,7 @@ class SpringDocConfig {
 
     fun info(): io.swagger.v3.oas.models.info.Info {
         return io.swagger.v3.oas.models.info.Info()
-            .title("Ks Explorer Servicei")
+            .title("Ks Explorer Service")
             .version("V1")
             .description("")
             .contact(Contact().name("Raine Jo").email("raine.jo@crypted.co.kr"))
