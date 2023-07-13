@@ -24,9 +24,6 @@ class DeployedContractDO : Serializable {
     @Column(name = "address")
     var address: String? = null
 
-    @Column(name = "supply")
-    var deployer: String? = null
-
     @Column(name = "deployed_at")
     var deployedAt: String? = null
 

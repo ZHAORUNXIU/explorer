@@ -54,7 +54,7 @@ class AccountAction {
     }
 
     /**
-     * EOA
+     * EOA or CA
      */
     @GetMapping("/{address}")
     @Operation(summary = "Get info by address", description = "Retrieve account info based on the provided address")
@@ -68,10 +68,10 @@ class AccountAction {
         LOG.info(Log.format("success", Log.kv("api", "account/")))
 
         // EOA
-        if (accountService!!.checkAccountIsContract(address).data == true)
-            return Result.failure(AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.code, AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.message)
+//        if (accountService!!.checkAccountIsContract(address).data == true)
+//            return Result.failure(AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.code, AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.message)
 
-        val result: Result<AccountInfoResp?> = accountService.getInfoByAddress(address)
+        val result: Result<AccountInfoResp?> = accountService!!.getInfoByAddress(address)
 
         return Result.success(result.data)
     }

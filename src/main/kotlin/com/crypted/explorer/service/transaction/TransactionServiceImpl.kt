@@ -1,9 +1,11 @@
 package com.crypted.explorer.service.transaction
 
+import com.crypted.explorer.api.model.domain.block.BlockMongoDO
 import com.crypted.explorer.api.model.domain.transaction.InflationMongoDO
 import com.crypted.explorer.api.model.domain.transaction.TransactionMongoDO
 import com.crypted.explorer.api.service.transaction.TransactionService
 import com.crypted.explorer.common.model.Result
+import com.crypted.explorer.common.repository.MongoUtils
 import com.crypted.explorer.common.util.MathUtils
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionInfoResp
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionListResp
@@ -19,7 +21,7 @@ import javax.annotation.Resource
 import kotlin.streams.toList
 
 @Service
-class TransactionServiceImpl : TransactionService {
+class TransactionServiceImpl(private val mongoUtils: MongoUtils) : TransactionService {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(TransactionServiceImpl::class.java)
@@ -61,8 +63,8 @@ class TransactionServiceImpl : TransactionService {
         }
         // get all txs
         else {
-            transactionMongoDOList = transactionMongoRepository!!.findAll(pageable).content
-            totalTx = transactionMongoRepository.count().toInt()
+            transactionMongoDOList = mongoUtils.getByPage(pageable, TransactionMongoDO::class)
+            totalTx = transactionMongoRepository!!.count().toInt()
         }
 
 
@@ -72,7 +74,7 @@ class TransactionServiceImpl : TransactionService {
             transactionListVO.txHash = transactionMongoDO!!.hash
             transactionListVO.method = transactionMongoDO.functionName?: transactionMongoDO.functionSignature
             transactionListVO.blockNumber = transactionMongoDO.blockNumber
-            transactionListVO.timestamp = transactionMongoDO.createdAt?.time
+            transactionListVO.timestamp = transactionMongoDO.createdAt?.time?.div(1000)
             transactionListVO.from = transactionMongoDO.from
             transactionListVO.to = transactionMongoDO.to
             transactionListVO.value =  transactionMongoDO.value
@@ -111,9 +113,9 @@ class TransactionServiceImpl : TransactionService {
     }
 
 
-    override fun getTransactionAmount(): Result<Int> {
+    override fun getTransactionAmountByBlockNumber(blockNumber: Int): Result<Int> {
 
-        return Result.success(transactionMongoRepository!!.count().toInt())
+        return Result.success(transactionMongoRepository!!.countByBlockNumber(blockNumber))
     }
 
     override fun getHistory(): Result<List<TransactionHistoryVO>?> {
@@ -124,7 +126,7 @@ class TransactionServiceImpl : TransactionService {
 
         val transactionList: List<TransactionHistoryVO> = inflationMongoDOList.stream().map { inflationMongoDO ->
             val transactionHistoryVO = TransactionHistoryVO().apply {
-                this.date = inflationMongoDO?.createdAt?.let { MathUtils.convertTimeZone(it).toString() }
+                this.date = inflationMongoDO?.createdAt?.let { MathUtils.convertTimeZone(it) }
                 this.count = inflationMongoDO?.transactionCount
             }
             transactionHistoryVO

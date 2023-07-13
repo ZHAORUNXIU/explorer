@@ -43,7 +43,7 @@ class SearchAction {
 
         LOG.info(Log.format("success", Log.kv("api", "/search/")))
 
-        val searchType: String = searchService!!.getSearchTypeByParam(param).data.toString()
+        val searchType: Int? = searchService!!.getSearchTypeByParam(param).data
         val searchTypeResp = SearchTypeResp().apply {
             this.searchType = searchType
         }

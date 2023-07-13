@@ -43,7 +43,7 @@ class AccountServiceImpl : AccountService {
         val accountRanking: List<AccountRankingVO> = accountDOList.stream().map { accountDO ->
             val accountRankingVO = AccountRankingVO()
             accountRankingVO.address = accountDO?.address
-            accountRankingVO.isContract = accountDO?.isContract == 0
+            accountRankingVO.isContract = accountDO?.isContract == 1
             accountRankingVO.balance = accountDO?.balance
             accountRankingVO.symbol = this@AccountServiceImpl.symbol
             accountRankingVO.percentage = (totalBlockReward?.let { accountDO?.balance?.toDouble()?.div(it) }?.times(100)).toString()

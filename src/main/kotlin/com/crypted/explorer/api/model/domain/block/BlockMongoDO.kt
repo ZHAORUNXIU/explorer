@@ -32,6 +32,7 @@ class BlockMongoDO : Serializable {
     var staticBlockReward: String? = null
     var timestamp = 0
     var updatedAt: Date? = null
+    var transactionCount = 0
 
     companion object {
         private const val serialVersionUID = 8718060005385905866L

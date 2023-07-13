@@ -10,7 +10,7 @@ interface TransactionService {
 
     fun getInfoByTxHash(txHash: String): Result<TransactionInfoResp?>
 
-    fun getTransactionAmount(): Result<Int>
+    fun getTransactionAmountByBlockNumber(blockNumber: Int): Result<Int>
 
     fun getHistory(): Result<List<TransactionHistoryVO>?>
 

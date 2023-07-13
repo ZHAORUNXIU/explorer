@@ -3,6 +3,7 @@ package com.crypted.explorer.common.util
 import java.math.BigDecimal
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 object MathUtils {
@@ -23,13 +24,13 @@ object MathUtils {
      * @param singaporeDateTime Singapore datetime
      * @return Seoul zoned dateTime
      */
-    fun convertTimeZone(singaporeDateTime: Date): ZonedDateTime {
+    fun convertTimeZone(singaporeDateTime: Date): String {
         val singaporeZoneId = ZoneId.of("Asia/Singapore")
         val koreaZoneId = ZoneId.of("Asia/Seoul")
 
         val singaporeZonedDateTime = ZonedDateTime.ofInstant(singaporeDateTime.toInstant(), singaporeZoneId)
         val koreaZonedDateTime = singaporeZonedDateTime.withZoneSameInstant(koreaZoneId)
 
-        return koreaZonedDateTime
+        return koreaZonedDateTime.format(DateTimeFormatter.ISO_INSTANT)
     }
 }

@@ -30,8 +30,8 @@ class AccountDO : Serializable {
     @Column(name = "nonce")
     var nonce: Int? = 0
 
-//    @Column(name = "public_name")
-//    var publicName: String? = null
+    @Column(name = "public_name_tag")
+    var publicNameTag: String? = null
 
     @Column(name = "is_contract")
     var isContract: Int? = 0

@@ -1,13 +1,17 @@
 package com.crypted.explorer.common.constant
 
-enum class SearchType(val value: String) {
+enum class SearchType(val value: Int) {
 
-    ACCOUNT("account"),
+    UNKNOWN(0),
 
-    BLOCK("block"),
+    CONTRACT_ACCOUNT(1),
 
-    TRANSACTION("transaction"),
+    EXTERNALLY_OWNED_ACCOUNT(2),
 
-    UNKNOWN("unknown")
+    BLOCK(3),
+
+    TRANSACTION(4),
+
+    TOKEN(5)
 
 }

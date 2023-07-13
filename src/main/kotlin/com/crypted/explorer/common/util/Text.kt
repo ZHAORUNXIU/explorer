@@ -231,6 +231,19 @@ object Text {
         return UUID.randomUUID().toString().replace("-".toRegex(), "")
     }
 
+    /**
+     * Remove all symbols and convert uppercase letters to lowercase.
+     *
+     * @param s   String
+     */
+    fun cleanAndLowercase(s: String): String {
+        // Remove all symbols
+        val stringWithoutSymbols = s.replace(Regex("[^a-zA-Z0-9]"), "")
+
+        // Convert uppercase letters to lowercase
+        return stringWithoutSymbols.lowercase(Locale.getDefault())
+    }
+
     private fun digest(algorithm: String, src: String, salt: String?): ByteArray? {
         var a = src.toByteArray()
         return try {

@@ -20,8 +20,8 @@ class Erc721HoldDO : Serializable {
     @Column(name = "id")
     var id: Long? = 0
 
-    @Column(name = "token_id")
-    var tokenId: Long? = 0
+//    @Column(name = "token_id")
+//    var tokenId: Long? = 0
 
     @Column(name = "holder")
     var holder: String? = null

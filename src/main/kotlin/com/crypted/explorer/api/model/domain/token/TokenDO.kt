@@ -37,11 +37,11 @@ class TokenDO : Serializable {
     @Column(name = "image")
     var image: String? = null
 
-    @Column(name = "officialSite")
-    var officialSite: String? = null
+    @Column(name = "site")
+    var site: String? = null
 
     @Column(name = "type")
-    var type: TokenType? = null
+    var type: String? = null
 
     @Column(name = "deployed_contract_id")
     var deployedContractId: Long? = 0

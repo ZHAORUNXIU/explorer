@@ -23,6 +23,7 @@ import com.crypted.explorer.common.util.Log.Companion.kv
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Text
+import org.springframework.dao.EmptyResultDataAccessException
 
 
 @RestController
@@ -51,6 +52,26 @@ class WebExceptionHandler {
             )
         )
         write(res, Code.ILLEGAL_REQUEST, e.message)
+    }
+
+    /**
+     * HttpStatus 400 - Resource Not Found
+     */
+    @ExceptionHandler(EmptyResultDataAccessException::class)
+    fun handleEmptyResultDataAccessException(
+        req: HttpServletRequest,
+        res: HttpServletResponse,
+        e: EmptyResultDataAccessException) {
+        LOG.error(
+            format(
+                LOG_PREFIX + "Resource Not Found",
+                kv(URI, req.requestURI),
+                e.message?.let { kv(MESSAGE, it) },
+                kv(HEADERS, getHeaders(req)),
+//                kv(USER_ID, ReqContext.get().getUserId())
+            ), e
+        )
+        write(res, Code.NOT_FOUND, e.message)
     }
 
     /**

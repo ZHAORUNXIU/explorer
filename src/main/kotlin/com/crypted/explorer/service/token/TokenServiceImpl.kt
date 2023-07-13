@@ -10,6 +10,7 @@ import com.crypted.explorer.common.constant.SearchType
 import com.crypted.explorer.common.constant.TokenType
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.MathUtils
+import com.crypted.explorer.common.util.Text
 import com.crypted.explorer.gateway.model.resp.token.TokenInfoResp
 import com.crypted.explorer.gateway.model.resp.token.TokenListResp
 import com.crypted.explorer.gateway.model.vo.token.TokenVO
@@ -60,19 +61,19 @@ class TokenServiceImpl : TokenService {
         // erc20 balance -> Quantity
         val erc20HoldDOList: List<Erc20HoldDO>? = erc20HoldRepository!!.findByHolder(holder)
         // erc721 and erc1155 balance -> Unique Tokens
-        val erc721HoldCountingMap: Map<Long, Long>? = erc721HoldRepository!!.findByHolder(holder)
-            ?.stream()?.collect(Collectors.groupingBy(Erc721HoldDO::tokenId, Collectors.counting()))
-        val erc1155HoldCountingMap: Map<Long, Long>? = erc1155HoldRepository!!.findByHolder(holder)
-            ?.stream()?.collect(Collectors.groupingBy(Erc1155HoldDO::tokenId, Collectors.counting()))
-        val mergedMap = mutableMapOf<Long, Long>()
-        erc721HoldCountingMap?.let { mergedMap.putAll(it) }
-        erc1155HoldCountingMap?.let { mergedMap.putAll(it) }
+//        val erc721HoldCountingMap: Map<Long, Long>? = erc721HoldRepository!!.findByHolder(holder)
+//            ?.stream()?.collect(Collectors.groupingBy(Erc721HoldDO::tokenId, Collectors.counting()))
+//        val erc1155HoldCountingMap: Map<Long, Long>? = erc1155HoldRepository!!.findByHolder(holder)
+//            ?.stream()?.collect(Collectors.groupingBy(Erc1155HoldDO::tokenId, Collectors.counting()))
+//        val mergedMap = mutableMapOf<Long, Long>()
+//        erc721HoldCountingMap?.let { mergedMap.putAll(it) }
+//        erc1155HoldCountingMap?.let { mergedMap.putAll(it) }
 
         val tokenHoldings: List<TokenVO> = listOfNotNull(
             // erc20
             erc20HoldDOList?.stream()?.map { erc20HoldDO ->
                 val tokenVO = TokenVO()
-                val tokenDO: TokenDO? = erc20HoldDO.tokenId?.let { tokenRepository!!.findById(it).get() }
+                val tokenDO: TokenDO? = erc20HoldDO.holder?.let { tokenRepository!!.findByAddress(it)}
                 tokenVO.name = tokenDO?.let { this.getTokenName(it).data }
                 tokenVO.tokenSymbol = tokenDO?.symbol
                 tokenVO.tokenBalance = erc20HoldDO.balance
@@ -80,17 +81,17 @@ class TokenServiceImpl : TokenService {
                 tokenVO
             }?.toList(),
             // erc721 and erc1155
-            mergedMap.entries.stream()
-                .map { entry ->
-                    val tokenVO = TokenVO()
-                    val tokenId = entry.key
-                    val tokenDO: TokenDO = tokenId.let { tokenRepository!!.findById(it).get() }
-                    tokenVO.name = tokenDO.let { this.getTokenName(it).data }
-                    tokenVO.tokenSymbol = tokenDO.symbol
-                    tokenVO.tokenBalance = entry.value.toString()
-                    tokenVO.imageUrl = tokenDO.image
-                    tokenVO
-                }?.toList(),
+//            mergedMap.entries.stream()
+//                .map { entry ->
+//                    val tokenVO = TokenVO()
+//                    val tokenId = entry.key
+//                    val tokenDO: TokenDO = tokenId.let { tokenRepository!!.findById(it).get() }
+//                    tokenVO.name = tokenDO.let { this.getTokenName(it).data }
+//                    tokenVO.tokenSymbol = tokenDO.symbol
+//                    tokenVO.tokenBalance = entry.value.toString()
+//                    tokenVO.imageUrl = tokenDO.image
+//                    tokenVO
+//                }?.toList(),
         ).flatten().toList()
 
         return Result.success(tokenHoldings)
@@ -131,7 +132,7 @@ class TokenServiceImpl : TokenService {
                 this.address = tokenDO.address
                 this.totalSupply = tokenDO.supply
                 this.totalTransfer = getTotalTransfers(tokenDO)
-            this.officialSite = tokenDO.officialSite
+                this.officialSite = tokenDO.site
                 this.imageUrl = tokenDO.image
             }
             return Result.success(tokenInfoResp)
@@ -149,10 +150,13 @@ class TokenServiceImpl : TokenService {
 
     private fun getTotalTransfers(tokenDO: TokenDO): Int? {
 
-        return when {
-            tokenDO.type == TokenType.ERC20 -> tokenDO.address?.let { erc20TransferMongoRepository!!.countByTokenAddress(it) }
-            tokenDO.type == TokenType.ERC721 -> tokenDO.address?.let { erc721TransferMongoRepository!!.countByTokenAddress(it) }
-            tokenDO.type == TokenType.ERC1155 -> tokenDO.address?.let { erc1155TransferMongoRepository!!.countByTokenAddress(it) }
+        val type = tokenDO.type?.let { Text.cleanAndLowercase(it) }
+        val address = tokenDO.address
+
+        return when (type) {
+            TokenType.ERC20.value -> address?.let { erc20TransferMongoRepository!!.countByTokenAddress(it) }
+            TokenType.ERC721.value -> address?.let { erc721TransferMongoRepository!!.countByTokenAddress(it) }
+            TokenType.ERC1155.value -> address?.let { erc1155TransferMongoRepository!!.countByTokenAddress(it) }
             else -> 0
         }
     }

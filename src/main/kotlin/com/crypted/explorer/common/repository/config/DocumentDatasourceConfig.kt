@@ -1,6 +1,5 @@
 package com.crypted.explorer.common.repository.config
 
-import com.crypted.explorer.common.repository.BaseMongoRepositoryImpl
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.client.MongoClient
