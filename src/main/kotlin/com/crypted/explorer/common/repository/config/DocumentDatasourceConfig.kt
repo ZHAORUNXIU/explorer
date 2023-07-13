@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.io.ClassPathResource
 import org.springframework.data.mongodb.MongoDatabaseFactory
 import org.springframework.data.mongodb.MongoTransactionManager
 import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration
@@ -54,31 +55,31 @@ class DocumentDatasourceConfig : AbstractMongoClientConfiguration() {
     //    @Bean
     override fun mongoClient(): MongoClient {
 //        checkSslProperties()
-        var connectionString = ConnectionString(url)
+        val connectionString = ConnectionString(url)
         //TLS
-//        var classPathJksFile = ResourceUtils.getFile(trustStore)
-        var ks = KeyStore.getInstance("JKS")
+//        val classPathJksFile = ResourceUtils.getFile(trustStore)
+        val ks = KeyStore.getInstance("JKS")
         log.info("### env ::: $env")
-//        if ("local".equals(env)) {
-//            var file =  ResourceUtils.getFile(trustStore).absoluteFile
-//            ks.load(FileInputStream(file.absoluteFile), trustStorePassword.toCharArray())
-//
-//        } else {
-//            var inputStream = ClassPathResource(trustStore).inputStream
-//            ks.load(inputStream, trustStorePassword.toCharArray())
-//        }
-        var file =  ResourceUtils.getFile(trustStore).absoluteFile
-        ks.load(FileInputStream(file.absoluteFile), trustStorePassword.toCharArray())
+        if ("local".equals(env)) {
+            val file =  ResourceUtils.getFile(trustStore).absoluteFile
+            ks.load(FileInputStream(file.absoluteFile), trustStorePassword.toCharArray())
 
-        var trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        } else {
+            val inputStream = ClassPathResource(trustStore).inputStream
+            ks.load(inputStream, trustStorePassword.toCharArray())
+        }
+//        val file =  ResourceUtils.getFile(trustStore).absoluteFile
+//        ks.load(FileInputStream(file.absoluteFile), trustStorePassword.toCharArray())
+
+        val trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         trustFactory.init(ks)
 
 
-        var sc = SSLContext.getInstance("TLS");
+        val sc = SSLContext.getInstance("TLS");
         sc.init(null, trustFactory.getTrustManagers(), null)
 
-//        var sslContext = SSLContext()
-        var mongoClientSettings = MongoClientSettings.builder()
+//        val sslContext = SSLContext()
+        val mongoClientSettings = MongoClientSettings.builder()
             .applyConnectionString(connectionString)
             .applyToSslSettings { block -> block.enabled(true).context(sc) }
             .build()
