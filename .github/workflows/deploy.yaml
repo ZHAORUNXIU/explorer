@@ -1,0 +1,107 @@
+name: Push Image to DevOps ECR
+
+on:
+  push:
+    branches:
+      - '*'
+
+permissions:
+  contents: read
+
+jobs:
+  push-image:
+    runs-on: "ubuntu-20.04"     
+    defaults:
+      run:
+        working-directory: ./
+        
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Declare Commit Hash variables
+        id: vars
+        shell: bash
+        run: |
+          echo "##[set-output name=branch_name;]$(echo ${GITHUB_REF#refs/heads/})"
+          echo "##[set-output name=repository_name;]$(echo ${GITHUB_REPOSITORY#*/})"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Get AWS infos
+        id: aws-infos
+        run: |
+          if [ "${{ steps.vars.outputs.branch_name }}" = "develop" ]; then
+            ACCESS_KEY_ID=${{ secrets.AWS_GITHUB_KSTADIUM_DEVELOP_ACCESS_KEY_ID }}
+            SECRET_ACCESS_KEY_ID=${{ secrets.AWS_GITHUB_KSTADIUM_DEVELOP_SECRET_ACCESS_KEY }}
+            ACCOUNT_ID=911781391110
+            AWS_REGION=ap-northeast-2
+          elif [ "${{ steps.vars.outputs.branch_name }}" = "release" ]; then
+            ACCESS_KEY_ID=${{ secrets.AWS_GITHUB_KSTADIUM_STAGE_ACCESS_KEY_ID }}
+            SECRET_ACCESS_KEY_ID=${{ secrets.AWS_GITHUB_KSTADIUM_STAGE_SECRET_ACCESS_KEY }}
+            ACCOUNT_ID=779626203419
+            AWS_REGION=ap-northeast-2
+          elif [ "${{ steps.vars.outputs.branch_name }}" = "main" ]; then
+            ACCESS_KEY_ID=${{ secrets.AWS_GITHUB_KSTADIUM_PRODUCTION_ACCESS_KEY_ID }}
+            SECRET_ACCESS_KEY_ID=${{ secrets.AWS_GITHUB_KSTADIUM_PRODUCTION_SECRET_ACCESS_KEY }}
+            ACCOUNT_ID=033240183289
+            AWS_REGION=ap-southeast-1
+          elif [ "${{ steps.vars.outputs.branch_name }}" = "rnd" ]; then
+            ACCESS_KEY_ID=${{ secrets.AWS_GITHUB_KSTADIUM_RND_ACCESS_KEY_ID }}
+            SECRET_ACCESS_KEY_ID=${{ secrets.AWS_GITHUB_KSTADIUM_RND_SECRET_ACCESS_KEY }}
+            ACCOUNT_ID=003072849841
+            AWS_REGION=ap-northeast-2
+          fi
+          echo "::set-output name=access_key::$(echo ${ACCESS_KEY_ID})"
+          echo "::set-output name=secret_access_key::$(echo ${SECRET_ACCESS_KEY_ID})"
+          echo "::set-output name=account_id::$(echo ${ACCOUNT_ID})"
+          echo "::set-output name=region_name::$(echo ${AWS_REGION})"
+     
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ steps.aws-infos.outputs.access_key }}
+          aws-secret-access-key: ${{ steps.aws-infos.outputs.secret_access_key }}
+          aws-region: ${{ steps.aws-infos.outputs.region_name }}
+
+      - name: Build image
+        run: docker build -t ${{ steps.vars.outputs.repository_name }} -f Dockerfile.${{ steps.vars.outputs.branch_name }} --no-cache .
+
+      - name: docker login
+        run: |
+          aws ecr get-login-password --region ${{ steps.aws-infos.outputs.region_name }} | docker login --username AWS --password-stdin ${{ steps.aws-infos.outputs.account_id }}.dkr.ecr.${{ steps.aws-infos.outputs.region_name }}.amazonaws.com
+      - name: tag image
+        run: |
+          docker tag ${{ steps.vars.outputs.repository_name }}:latest ${{ steps.aws-infos.outputs.account_id }}.dkr.ecr.${{ steps.aws-infos.outputs.region_name }}.amazonaws.com/${{ steps.vars.outputs.branch_name }}/${{ steps.vars.outputs.repository_name }}:latest
+          docker tag ${{ steps.vars.outputs.repository_name }}:latest ${{ steps.aws-infos.outputs.account_id }}.dkr.ecr.${{ steps.aws-infos.outputs.region_name }}.amazonaws.com/${{ steps.vars.outputs.branch_name }}/${{ steps.vars.outputs.repository_name }}:${{ steps.vars.outputs.sha_short }}
+      - name: push image
+        run: docker push ${{ steps.aws-infos.outputs.account_id }}.dkr.ecr.${{ steps.aws-infos.outputs.region_name }}.amazonaws.com/${{ steps.vars.outputs.branch_name }}/${{ steps.vars.outputs.repository_name }} --all-tags
+        
+        
+        
+        
+  notify:
+    needs: push-image
+    runs-on: "ubuntu-20.04"
+    if: always()
+    steps:
+      - name: Declare variables
+        id: vars
+        shell: bash
+        run: |
+          echo "##[set-output name=branch_name;]$(echo ${GITHUB_REF#refs/heads/})"
+          echo "##[set-output name=repository_name;]$(echo ${GITHUB_REPOSITORY#*/})"
+      - name: Slack Notification on success
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR: ${{needs.push-image.result}}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_TITLE: ECR Upload SUCCESS - ${{ steps.vars.outputs.branch_name }}/${{ steps.vars.outputs.repository_name }}
+          MSG_MINIMAL: actions url
+        if: needs.push-image.result == 'success'
+
+      - name: Slack Notification on failure
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR: ${{needs.push-image.result}}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_TITLE: ECR Upload Failed - ${{ steps.vars.outputs.branch_name }}/${{ steps.vars.outputs.repository_name }}
+          MSG_MINIMAL: actions url
+        if: needs.push-image.result != 'success'
