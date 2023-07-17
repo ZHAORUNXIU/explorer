@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import javax.annotation.Resource
+import javax.validation.constraints.Max
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
 
@@ -44,12 +45,13 @@ class TransactionAction {
     fun getList(@Parameter(description = "fromAddress", required = false, allowEmptyValue = true) @RequestParam(required = false) fromAddress: String?,
                 @Parameter(description = "toAddress", required = false, allowEmptyValue = true) @RequestParam(required = false) toAddress: String?,
                 @Parameter(description = "blockNumber", required = false, allowEmptyValue = true) @RequestParam(required = false) @Min(1) blockNumber: Int?,
+                @Parameter(description = "status", required = false) @RequestParam(required = false) @Min(0) @Max(1) status: Int?,
                 @Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(1) pageNumber: Int,
                 @Parameter(description = "pageSize", required = true) @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<TransactionListResp?> {
 
         LOG.info(Log.format("success", Log.kv("api", "transaction/list")))
 
-        val result: Result<TransactionListResp?> = transactionService!!.getListByPage(fromAddress, toAddress, blockNumber, pageNumber, pageSize)
+        val result: Result<TransactionListResp?> = transactionService!!.getListByPage(fromAddress, toAddress, blockNumber, status, pageNumber, pageSize)
 
         return Result.success(result.data)
     }

@@ -15,6 +15,8 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
+import java.math.MathContext
 import javax.annotation.Resource
 import kotlin.streams.toList
 
@@ -38,15 +40,21 @@ class AccountServiceImpl : AccountService {
     override fun getRankingByPage(pageNumber: Int, pageSize: Int): Result<AccountRankingResp?> {
 
         val pageable: Pageable = PageRequest.of(pageNumber-1, pageSize, Sort.Direction.DESC, RANKING_BY_BALANCE)
-        val accountDOList: List<AccountDO?> = accountRepository!!.findAll(pageable).content
-        val totalBlockReward = blockService!!.getTotalBlockReward().data?.toDouble()
+        val accountDOList: List<AccountDO?> = accountRepository!!.findAllOrderByBalance(pageable).content
+//        val totalBlockReward = blockService!!.getTotalBlockReward().data?.toDouble()
+        val totalBlockReward = blockService!!.getTotalBlockReward().data?.let { BigDecimal(it) }
         val accountRanking: List<AccountRankingVO> = accountDOList.stream().map { accountDO ->
             val accountRankingVO = AccountRankingVO()
             accountRankingVO.address = accountDO?.address
             accountRankingVO.isContract = accountDO?.isContract == 1
             accountRankingVO.balance = accountDO?.balance
             accountRankingVO.symbol = this@AccountServiceImpl.symbol
-            accountRankingVO.percentage = (totalBlockReward?.let { accountDO?.balance?.toDouble()?.div(it) }?.times(100)).toString()
+//            accountRankingVO.percentage = (totalBlockReward?.let { accountDO?.balance?.toDouble()?.div(it) }?.times(100)).toString()
+            accountRankingVO.percentage = totalBlockReward?.let {
+                accountDO?.balance?.let { balance ->
+                    BigDecimal(balance).divide(it, MathContext.DECIMAL128).multiply(BigDecimal("100"))
+                }
+            }?.toString()
             // txCount equals accountDO.nonce
             accountRankingVO.txCount = accountDO?.nonce
             accountRankingVO

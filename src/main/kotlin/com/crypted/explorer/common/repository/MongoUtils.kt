@@ -2,9 +2,11 @@ package com.crypted.explorer.common.repository
 
 import com.crypted.explorer.api.model.domain.block.BlockMongoDO
 import com.crypted.explorer.api.service.account.AccountService
+import org.bson.Document
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -21,22 +23,49 @@ class MongoUtils(private val mongoTemplate: MongoTemplate) {
 //    @Resource
 //    private val mongoTemplate: MongoTemplate? = null
 
-    fun <T : Any> getByPage(pageable: Pageable, entityType: KClass<T>): List<T> {
+    fun <T : Any> getByPage(pageable: Pageable, entityType: KClass<T>, andCriteriaList: List<Criteria>? = null, orCriteriaList: List<Criteria>? = null): List<T> {
         val query = Query().with(pageable)
+//        criteria?.let {
+//            query.addCriteria(it)
+//        }
+        if (!andCriteriaList.isNullOrEmpty()) {
+            val andCriteriaQuery = Criteria().andOperator(*andCriteriaList.toTypedArray())
+            query.addCriteria(andCriteriaQuery)
+        }
+
+        if (!orCriteriaList.isNullOrEmpty()) {
+            val orCriteriaQuery = Criteria().orOperator(*orCriteriaList.toTypedArray())
+            query.addCriteria(orCriteriaQuery)
+        }
         return mongoTemplate.find(query, entityType.java)
     }
 
-    fun <T : Any> getByPage(page: Int, pagePerSize: Int, entityType: KClass<T>): List<T> {
-        val skip = (page - 1) * pagePerSize
-        val query = Query()
-            .skip(skip.toLong())
-            .limit(pagePerSize + skip)
-        query.with(Sort.by("number").descending())
-        return mongoTemplate.find(query, entityType.java)
-    }
+//    fun <T : Any> count(entityType: KClass<T>): Int {
+//        val query = Query()
+//        return mongoTemplate.count(query, entityType.java).toInt()
+//    }
 
-    fun <T : Any> count(entityType: KClass<T>): Int {
-        val query = Query()
-        return mongoTemplate.count(query, entityType.java).toInt()
+    fun getCountWithNativeQuery(collectionName: String, andCriteriaList: List<Criteria>? = null, orCriteriaList: List<Criteria>? = null): Int {
+        val nativeQuery = Document()
+        nativeQuery["count"] = collectionName
+
+        if (!andCriteriaList.isNullOrEmpty() || !orCriteriaList.isNullOrEmpty()) {
+            val queryObject = Document()
+
+            if (!andCriteriaList.isNullOrEmpty()) {
+                val andCriteriaArray = andCriteriaList.map { it.criteriaObject }
+                queryObject["\$and"] = andCriteriaArray
+            }
+
+            if (!orCriteriaList.isNullOrEmpty()) {
+                val orCriteriaArray = orCriteriaList.map { it.criteriaObject }
+                queryObject["\$or"] = orCriteriaArray
+            }
+
+            nativeQuery["query"] = queryObject
+        }
+
+        val countResult = mongoTemplate.executeCommand(nativeQuery)
+        return countResult["n"].toString().toInt()
     }
 }

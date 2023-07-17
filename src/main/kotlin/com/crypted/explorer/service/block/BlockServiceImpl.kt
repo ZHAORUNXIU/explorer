@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.util.*
 import javax.annotation.Resource
 
@@ -24,6 +26,8 @@ import javax.annotation.Resource
 class BlockServiceImpl(private val mongoUtils: MongoUtils) : BlockService {
 
     private val SORT_BY_BLOCK_NUMBER = "number"
+
+    private val COLLECTION_NAME_BLOCKS = "blocks"
 
     @Value("\${block.symbol}")
     private lateinit var symbol: String
@@ -54,7 +58,9 @@ class BlockServiceImpl(private val mongoUtils: MongoUtils) : BlockService {
         }.toList()
 
 //        val totalBlock: Int = blockMongoRepository!!.count().toInt()
-        val totalBlock: Int = blockMongoRepository!!.findTopByOrderByNumberDesc().number
+        val totalBlock: Int = mongoUtils.getCountWithNativeQuery(COLLECTION_NAME_BLOCKS)
+
+//        val totalBlock: Int = blockMongoRepository!!.findTopByOrderByNumberDesc().number
 
 
         val blockListResp = BlockListResp().apply {
@@ -85,21 +91,30 @@ class BlockServiceImpl(private val mongoUtils: MongoUtils) : BlockService {
     override fun getTotalBlockReward(): Result<String> {
 
         val inflationRatioDOList: List<InflationRatioDO> = inflationRatioMongoRepository!!.findAll()
+        val latestBlockNumber = BigInteger(blockMongoRepository!!.findTopByOrderByNumberDesc().number.toString())
 
         val sortedList = inflationRatioDOList.sortedBy { it.blockNumber }
 
-        var accumulatedBlockReward = 0.0
-        var previousBlockNumber = 1
-        var staticBlockReward = 0.0
+        var accumulatedBlockReward = BigDecimal.ONE
+            .multiply(BigDecimal("5000000000"))
+            .scaleByPowerOfTen(18).toBigInteger()
+
+//        var accumulatedBlockReward = BigInteger("5000000000")
+            //BigInteger.ZERO
+        var previousBlockNumber = BigInteger.ONE
+        var staticBlockReward = BigInteger.ZERO
 
         for (inflationRatioDO in sortedList) {
-            val currentBlockNumber = inflationRatioDO.blockNumber
+            val currentBlockNumber = BigInteger(inflationRatioDO.blockNumber.toString())
 
-            accumulatedBlockReward += staticBlockReward * (currentBlockNumber - previousBlockNumber)
+            accumulatedBlockReward += staticBlockReward.multiply(currentBlockNumber.subtract(previousBlockNumber))
 
             previousBlockNumber = currentBlockNumber
-            staticBlockReward = inflationRatioDO.staticBlockReward?.toDouble() ?: 0.0
+            staticBlockReward = BigInteger(inflationRatioDO.staticBlockReward?: "0")
         }
+
+        if (latestBlockNumber > previousBlockNumber)
+            accumulatedBlockReward += staticBlockReward.multiply(latestBlockNumber.subtract(previousBlockNumber).add(BigInteger.ONE))
 
         return Result.success(accumulatedBlockReward.toString())
     }

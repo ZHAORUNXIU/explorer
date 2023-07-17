@@ -13,9 +13,12 @@ import com.crypted.explorer.gateway.model.vo.transaction.TransactionHistoryVO
 import com.crypted.explorer.gateway.model.vo.transaction.TransactionListVO
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.stereotype.Service
 import javax.annotation.Resource
 import kotlin.streams.toList
@@ -26,6 +29,16 @@ class TransactionServiceImpl(private val mongoUtils: MongoUtils) : TransactionSe
     companion object {
         private val LOG = LoggerFactory.getLogger(TransactionServiceImpl::class.java)
     }
+
+    private val COLLECTION_NAME_TRANSACTIONS = "transactions"
+
+    private val FIELD_NAME_FROM = "from"
+
+    private val FIELD_NAME_TO = "to"
+
+    private val FIELD_NAME_BLOCKNUMBER = "blockNumber"
+
+    private val FIELD_NAME_STATUS = "status"
 
     private val SORT_BY_CREATED_AT = "createdAt"
 
@@ -39,47 +52,33 @@ class TransactionServiceImpl(private val mongoUtils: MongoUtils) : TransactionSe
     private val transactionMongoRepository: TransactionMongoRepository? = null
 
     @Resource
-    private val inflationMongoRepository : InflationMongoRepository? = null
-    override fun getListByPage(fromAddress: String?, toAddress: String?, blockNumber: Int?, pageNumber: Int, pageSize: Int): Result<TransactionListResp?> {
+    private val inflationMongoRepository: InflationMongoRepository? = null
+    override fun getListByPage(
+        fromAddress: String?,
+        toAddress: String?,
+        blockNumber: Int?,
+        status: Int?,
+        pageNumber: Int,
+        pageSize: Int
+    ): Result<TransactionListResp?> {
 
-        val pageable: Pageable = PageRequest.of(pageNumber-1, pageSize, Sort.Direction.DESC, SORT_BY_CREATED_AT)
+        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_CREATED_AT)
 
-        val transactionMongoDOList: List<TransactionMongoDO?>
-        val totalTx: Int
-        // get txs by from and to
-        if (!fromAddress.isNullOrBlank() && !toAddress.isNullOrBlank() && blockNumber == null) {
-            transactionMongoDOList = transactionMongoRepository!!.findByFromOrTo(fromAddress, toAddress, pageable).content
-            totalTx = transactionMongoRepository.countByFromOrTo(fromAddress, toAddress)
-        }
-        // get txs by to
-        else if (fromAddress.isNullOrBlank() && !toAddress.isNullOrBlank() && blockNumber == null) {
-            transactionMongoDOList = transactionMongoRepository!!.findByTo(toAddress, pageable).content
-            totalTx = transactionMongoRepository.countByTo(toAddress)
-        }
-        // get txs by block number
-        else if (fromAddress.isNullOrBlank() && toAddress.isNullOrBlank() && blockNumber != null) {
-            transactionMongoDOList = transactionMongoRepository!!.findByBlockNumber(blockNumber, pageable).content
-            totalTx = transactionMongoRepository.countByBlockNumber(blockNumber)
-        }
-        // get all txs
-        else {
-            transactionMongoDOList = mongoUtils.getByPage(pageable, TransactionMongoDO::class)
-            totalTx = transactionMongoRepository!!.count().toInt()
-        }
-
+        val transactionMongoDOList: List<TransactionMongoDO?> = this.findByFromOrToOrBlockNumberAndStatus(fromAddress, toAddress, blockNumber, status, pageable)
+        val totalTx: Int = this.countByFromOrToOrBlockNumberAndStatus(fromAddress, toAddress, blockNumber, status)
 
         val transactionList: List<TransactionListVO?> = transactionMongoDOList.stream().map { transactionMongoDO ->
             val transactionListVO = TransactionListVO()
             transactionListVO.status = transactionMongoDO?.status
             transactionListVO.txHash = transactionMongoDO!!.hash
-            transactionListVO.method = transactionMongoDO.functionName?: transactionMongoDO.functionSignature
+            transactionListVO.method = transactionMongoDO.functionName ?: transactionMongoDO.functionSignature
             transactionListVO.blockNumber = transactionMongoDO.blockNumber
             transactionListVO.timestamp = transactionMongoDO.createdAt?.time?.div(1000)
             transactionListVO.from = transactionMongoDO.from
             transactionListVO.to = transactionMongoDO.to
-            transactionListVO.value =  transactionMongoDO.value
+            transactionListVO.value = transactionMongoDO.value
             transactionListVO.txFee = transactionMongoDO.fee?.let { MathUtils.convertWeiToEther(it) }
-            transactionListVO.symbol =  this@TransactionServiceImpl.symbol
+            transactionListVO.symbol = this@TransactionServiceImpl.symbol
             transactionListVO
         }.toList()
 
@@ -134,4 +133,51 @@ class TransactionServiceImpl(private val mongoUtils: MongoUtils) : TransactionSe
 
         return Result.success(transactionList)
     }
+
+    private fun findByFromOrToOrBlockNumberAndStatus(fromAddress: String?, toAddress: String?, blockNumber: Int?, status: Int?, pageable: Pageable): List<TransactionMongoDO> {
+        val andCriteriaList = mutableListOf<Criteria>()
+        val orCriteriaList = mutableListOf<Criteria>()
+
+        if (!fromAddress.isNullOrBlank()) {
+            orCriteriaList.add(Criteria.where(FIELD_NAME_FROM).`is`(fromAddress))
+        }
+
+        if (!toAddress.isNullOrBlank()) {
+            orCriteriaList.add(Criteria.where(FIELD_NAME_TO).`is`(toAddress))
+        }
+
+        if (blockNumber != null && blockNumber != 0) {
+            orCriteriaList.add(Criteria.where(FIELD_NAME_BLOCKNUMBER).`is`(blockNumber))
+        }
+
+        if (status != null) {
+            andCriteriaList.add(Criteria.where(FIELD_NAME_STATUS).`is`(status))
+        }
+
+        return mongoUtils.getByPage(pageable, TransactionMongoDO::class, andCriteriaList, orCriteriaList)
+    }
+
+    private fun countByFromOrToOrBlockNumberAndStatus(fromAddress: String?, toAddress: String?, blockNumber: Int?, status: Int?): Int {
+        val andCriteriaList = mutableListOf<Criteria>()
+        val orCriteriaList = mutableListOf<Criteria>()
+
+        if (!fromAddress.isNullOrBlank()) {
+            orCriteriaList.add(Criteria.where(FIELD_NAME_FROM).`is`(fromAddress))
+        }
+
+        if (!toAddress.isNullOrBlank()) {
+            orCriteriaList.add(Criteria.where(FIELD_NAME_TO).`is`(toAddress))
+        }
+
+        if (blockNumber != null && blockNumber != 0) {
+            orCriteriaList.add(Criteria.where(FIELD_NAME_BLOCKNUMBER).`is`(blockNumber))
+        }
+
+        if (status != null) {
+            andCriteriaList.add(Criteria.where(FIELD_NAME_STATUS).`is`(status))
+        }
+
+        return mongoUtils.getCountWithNativeQuery(COLLECTION_NAME_TRANSACTIONS, andCriteriaList, orCriteriaList)
+    }
+
 }
