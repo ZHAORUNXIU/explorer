@@ -28,15 +28,19 @@ class MongoUtils(private val mongoTemplate: MongoTemplate) {
 //        criteria?.let {
 //            query.addCriteria(it)
 //        }
+        val criteria = Criteria()
         if (!andCriteriaList.isNullOrEmpty()) {
-            val andCriteriaQuery = Criteria().andOperator(*andCriteriaList.toTypedArray())
-            query.addCriteria(andCriteriaQuery)
+//            val andCriteriaQuery = Criteria().andOperator(*andCriteriaList.toTypedArray())
+//            query.addCriteria(andCriteriaQuery)
+            criteria.andOperator(*andCriteriaList.toTypedArray())
         }
 
         if (!orCriteriaList.isNullOrEmpty()) {
-            val orCriteriaQuery = Criteria().orOperator(*orCriteriaList.toTypedArray())
-            query.addCriteria(orCriteriaQuery)
+//            val orCriteriaQuery = Criteria().orOperator(*orCriteriaList.toTypedArray())
+//            query.addCriteria(orCriteriaQuery)
+            criteria.orOperator(*orCriteriaList.toTypedArray())
         }
+        query.addCriteria(criteria)
         return mongoTemplate.find(query, entityType.java)
     }
 
