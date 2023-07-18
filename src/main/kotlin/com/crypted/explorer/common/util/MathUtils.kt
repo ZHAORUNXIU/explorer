@@ -15,7 +15,7 @@ object MathUtils {
     fun convertWeiToEther(weiAmount: String): String {
         val wei = BigDecimal(weiAmount)
         val ether = wei.divide(BigDecimal("1000000000000000000")) // 1 Ether = 10^18 Wei
-        return ether.toString()
+        return ether.toPlainString()
     }
 
     /**

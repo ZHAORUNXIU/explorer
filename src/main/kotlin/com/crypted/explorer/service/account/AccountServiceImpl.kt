@@ -54,7 +54,7 @@ class AccountServiceImpl : AccountService {
                 accountDO?.balance?.let { balance ->
                     BigDecimal(balance).divide(it, MathContext.DECIMAL128).multiply(BigDecimal("100"))
                 }
-            }?.toString()
+            }?.toPlainString()
             // txCount equals accountDO.nonce
             accountRankingVO.txCount = accountDO?.nonce
             accountRankingVO
