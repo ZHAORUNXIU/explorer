@@ -98,7 +98,7 @@ class TransactionServiceImpl(private val mongoUtils: MongoUtils) : TransactionSe
         val transactionInfoResp = TransactionInfoResp().apply {
             this.txHash = transactionMongoDO?.hash
             this.blockNumber = transactionMongoDO?.blockNumber
-            this.timestamp = transactionMongoDO?.createdAt?.time?.toInt()
+            this.timestamp = transactionMongoDO?.createdAt?.time?.toInt()?.div(1000)
             this.from = transactionMongoDO?.from
             this.to = transactionMongoDO?.to
             this.value = transactionMongoDO?.value
