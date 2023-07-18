@@ -9,7 +9,7 @@ class TransactionInfoResp : Serializable {
     @Schema(description = "blockNumber", type = "integer")
     var blockNumber: Int? = 0
     @Schema(description = "timestamp", type = "integer")
-    var timestamp: Int? = 0
+    var timestamp: Long? = 0
     @Schema(description = "from", type = "string")
     var from: String? = null
     @Schema(description = "to", type = "string")
