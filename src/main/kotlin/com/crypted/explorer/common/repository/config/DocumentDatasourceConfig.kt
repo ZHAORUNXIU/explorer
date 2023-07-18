@@ -60,6 +60,7 @@ class DocumentDatasourceConfig : AbstractMongoClientConfiguration() {
 //        val classPathJksFile = ResourceUtils.getFile(trustStore)
         val ks = KeyStore.getInstance("JKS")
         log.info("### env ::: $env")
+
         if ("local".equals(env)) {
             val file =  ResourceUtils.getFile(trustStore).absoluteFile
             ks.load(FileInputStream(file.absoluteFile), trustStorePassword.toCharArray())
