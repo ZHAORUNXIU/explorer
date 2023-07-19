@@ -10,20 +10,29 @@ import com.crypted.explorer.common.util.MathUtils
 import com.crypted.explorer.gateway.model.resp.block.BlockInfoResp
 import com.crypted.explorer.gateway.model.resp.block.BlockListResp
 import com.crypted.explorer.gateway.model.vo.block.BlockListVO
+import com.crypted.explorer.service.account.AccountServiceImpl
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
-import javax.annotation.Resource
 
 
 @Service
-class BlockServiceImpl(private val mongoUtils: MongoUtils) : BlockService {
+class BlockServiceImpl(
+    private val mongoUtils: MongoUtils,
+    private val blockMongoRepository: BlockMongoRepository,
+    private val inflationRatioMongoRepository: InflationRatioMongoRepository,
+    private val transactionService: TransactionService
+) : BlockService {
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(BlockServiceImpl::class.java)
+    }
 
     private val SORT_BY_BLOCK_NUMBER = "number"
 
@@ -32,19 +41,10 @@ class BlockServiceImpl(private val mongoUtils: MongoUtils) : BlockService {
     @Value("\${block.symbol}")
     private lateinit var symbol: String
 
-    @Resource
-    private val blockMongoRepository: BlockMongoRepository? = null
-
-    @Resource
-    private val inflationRatioMongoRepository: InflationRatioMongoRepository? = null
-
-    @Resource
-    private val transactionService: TransactionService? = null
-
     override fun getListByPage(pageNumber: Int, pageSize: Int): Result<BlockListResp?> {
 
-        val pageable: Pageable = PageRequest.of(pageNumber-1, pageSize, Sort.Direction.DESC, SORT_BY_BLOCK_NUMBER)
-        val blockMongoDOList: List<BlockMongoDO> = mongoUtils.getByPage(pageable,BlockMongoDO::class)
+        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_BLOCK_NUMBER)
+        val blockMongoDOList: List<BlockMongoDO> = mongoUtils.getByPage(pageable, BlockMongoDO::class)
 
         val blockList: List<BlockListVO?> = blockMongoDOList.stream().map { blockMongoDO ->
             val blockListVO = BlockListVO()
@@ -74,12 +74,12 @@ class BlockServiceImpl(private val mongoUtils: MongoUtils) : BlockService {
 
     override fun getInfoByBlockNumber(blockNumber: Int): Result<BlockInfoResp?> {
 
-        val blockMongoDO: BlockMongoDO = blockMongoRepository!!.findByNumber(blockNumber)
+        val blockMongoDO: BlockMongoDO = blockMongoRepository.findByNumber(blockNumber)
 
         val blockInfoResp = BlockInfoResp().apply {
             this.blockNumber = blockMongoDO.number
             this.timestamp = blockMongoDO.timestamp.toString()
-            this.txCount = transactionService!!.getTransactionAmountByBlockNumber(blockMongoDO.number).data
+            this.txCount = transactionService.getTransactionAmountByBlockNumber(blockMongoDO.number).data
             this.blockReward = blockMongoDO.blockReward?.let { MathUtils.convertWeiToEther(it) }
             this.symbol = this@BlockServiceImpl.symbol
             this.latestBlock = blockMongoRepository.findTopByOrderByNumberDesc().number
@@ -90,8 +90,8 @@ class BlockServiceImpl(private val mongoUtils: MongoUtils) : BlockService {
 
     override fun getTotalBlockReward(): Result<String> {
 
-        val inflationRatioDOList: List<InflationRatioDO> = inflationRatioMongoRepository!!.findAll()
-        val latestBlockNumber = BigInteger(blockMongoRepository!!.findTopByOrderByNumberDesc().number.toString())
+        val inflationRatioDOList: List<InflationRatioDO> = inflationRatioMongoRepository.findAll()
+        val latestBlockNumber = BigInteger(blockMongoRepository.findTopByOrderByNumberDesc().number.toString())
 
         val sortedList = inflationRatioDOList.sortedBy { it.blockNumber }
 
@@ -100,7 +100,7 @@ class BlockServiceImpl(private val mongoUtils: MongoUtils) : BlockService {
             .scaleByPowerOfTen(18).toBigInteger()
 
 //        var accumulatedBlockReward = BigInteger("5000000000")
-            //BigInteger.ZERO
+        //BigInteger.ZERO
         var previousBlockNumber = BigInteger.ONE
         var staticBlockReward = BigInteger.ZERO
 
@@ -110,11 +110,13 @@ class BlockServiceImpl(private val mongoUtils: MongoUtils) : BlockService {
             accumulatedBlockReward += staticBlockReward.multiply(currentBlockNumber.subtract(previousBlockNumber))
 
             previousBlockNumber = currentBlockNumber
-            staticBlockReward = BigInteger(inflationRatioDO.staticBlockReward?: "0")
+            staticBlockReward = BigInteger(inflationRatioDO.staticBlockReward ?: "0")
         }
 
         if (latestBlockNumber > previousBlockNumber)
-            accumulatedBlockReward += staticBlockReward.multiply(latestBlockNumber.subtract(previousBlockNumber).add(BigInteger.ONE))
+            accumulatedBlockReward += staticBlockReward.multiply(
+                latestBlockNumber.subtract(previousBlockNumber).add(BigInteger.ONE)
+            )
 
         return Result.success(accumulatedBlockReward.toString())
     }

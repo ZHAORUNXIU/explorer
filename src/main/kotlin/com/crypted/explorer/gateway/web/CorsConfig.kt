@@ -21,8 +21,6 @@ class CorsConfig {
 
         //1.Cors Configuration
         val config = CorsConfiguration()
-        //config.addAllowedOrigin("http://manage.leyou.com");
-        //config.addAllowedOrigin("http://www.leyou.com");
 //        config.addAllowedOrigin("*")
 //        config.allowedOriginPatterns = listOf("*")
         config.allowedOrigins = allowedOriginList

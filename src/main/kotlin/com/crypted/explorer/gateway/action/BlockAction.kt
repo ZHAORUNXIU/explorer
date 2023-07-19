@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
-import javax.annotation.Resource
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
 
@@ -24,14 +23,11 @@ import javax.validation.constraints.NotNull
 @Validated
 @Component
 @Tag(name = "Block Service API", description = "API endpoints related to block operations")
-class BlockAction {
+class BlockAction(private val blockService: BlockService)  {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(BlockAction::class.java)
     }
-
-    @Resource
-    private val blockService: BlockService? = null
 
     @GetMapping("/list")
     @Operation(summary = "Get list", description = "Retrieve block list based on the provided pageNumber and pageSize")
@@ -45,7 +41,7 @@ class BlockAction {
 
         LOG.info(Log.format("success", Log.kv("api", "block/list")))
 
-        val result: Result<BlockListResp?> = blockService!!.getListByPage(pageNumber, pageSize)
+        val result: Result<BlockListResp?> = blockService.getListByPage(pageNumber, pageSize)
 
         return Result.success(result.data)
     }
@@ -61,7 +57,7 @@ class BlockAction {
 
         LOG.info(Log.format("success", Log.kv("api", "block/")))
 
-        val result: Result<BlockInfoResp?> = blockService!!.getInfoByBlockNumber(blockNumber)
+        val result: Result<BlockInfoResp?> = blockService.getInfoByBlockNumber(blockNumber)
 
         return Result.success(result.data)
     }

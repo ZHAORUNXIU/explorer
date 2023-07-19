@@ -5,19 +5,22 @@ import com.crypted.explorer.api.service.search.SearchService
 import com.crypted.explorer.common.constant.SearchType
 import org.springframework.stereotype.Service
 import com.crypted.explorer.common.model.Result
+import com.crypted.explorer.service.block.BlockServiceImpl
+import org.slf4j.LoggerFactory
 import javax.annotation.Resource
 
 @Service
-class SearchServiceImpl : SearchService {
+class SearchServiceImpl(private val accountService: AccountService) : SearchService {
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(SearchServiceImpl::class.java)
+    }
 
     private val BLOCK_NUMBER_PATTERN = "^[0-9]+$"
 
     private val ACCOUNT_ADDRESS_PATTERN = "^0x[0-9a-fA-F]{40}$"
 
     private val TX_HASH_PATTERN = "^0x[0-9a-fA-F]{64}$"
-
-    @Resource
-    private val accountService: AccountService? = null
 
     override fun getSearchTypeByParam(param: String): Result<Int> {
 
@@ -28,7 +31,7 @@ class SearchServiceImpl : SearchService {
         return when {
             param.matches(blockNumberRegex) -> Result.success(SearchType.BLOCK.value)
             param.matches(accountAddressRegex) -> {
-                val isContract = accountService!!.checkAccountIsContract(param).data
+                val isContract = accountService.checkAccountIsContract(param).data
                 if (isContract == true) {
                     Result.success(SearchType.CONTRACT_ACCOUNT.value)
                 } else {

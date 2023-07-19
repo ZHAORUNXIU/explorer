@@ -8,15 +8,12 @@ import javax.annotation.Resource
 import javax.servlet.http.HttpServletRequest
 
 @Component
-class I18nHelper {
-    @Resource
-    private val localeResolver: LocaleResolver? = null
+class I18nHelper(private val localeResolver: LocaleResolver, private val messageSource: MessageSource) {
 
-    @Resource
-    private val messageSource: MessageSource? = null
     fun getMessage(request: HttpServletRequest?, code: Int, vararg args: Any?): String? {
         return request?.let { localeResolver!!.resolveLocale(it) }?.let {
-            messageSource!!.getMessage(Integer.toString(code), args, null,
+            messageSource!!.getMessage(
+                Integer.toString(code), args, null,
                 it
             )
         }

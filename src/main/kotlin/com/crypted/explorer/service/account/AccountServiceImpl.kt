@@ -6,10 +6,12 @@ import com.crypted.explorer.api.service.block.BlockService
 import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.MathUtils
+import com.crypted.explorer.gateway.action.AccountAction
 import com.crypted.explorer.gateway.model.resp.account.AccountInfoResp
 import com.crypted.explorer.gateway.model.resp.account.AccountRankingResp
 import com.crypted.explorer.gateway.model.vo.account.AccountRankingVO
 import com.crypted.explorer.gateway.model.vo.token.TokenVO
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -17,32 +19,29 @@ import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.MathContext
-import javax.annotation.Resource
-import kotlin.streams.toList
 
 @Service
-class AccountServiceImpl : AccountService {
+class AccountServiceImpl(
+    private val accountRepository: AccountRepository,
+    private val tokenService: TokenService,
+    private val blockService: BlockService
+) : AccountService {
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(AccountServiceImpl::class.java)
+    }
 
     private val RANKING_BY_BALANCE = "balance"
 
     @Value("\${account.symbol}")
     private lateinit var symbol: String
 
-    @Resource
-    private val accountRepository: AccountRepository? = null
-
-    @Resource
-    private val tokenService: TokenService? = null
-
-    @Resource
-    private val blockService: BlockService? = null
-
     override fun getRankingByPage(pageNumber: Int, pageSize: Int): Result<AccountRankingResp?> {
 
-        val pageable: Pageable = PageRequest.of(pageNumber-1, pageSize, Sort.Direction.DESC, RANKING_BY_BALANCE)
-        val accountDOList: List<AccountDO?> = accountRepository!!.findAllOrderByBalance(pageable).content
-//        val totalBlockReward = blockService!!.getTotalBlockReward().data?.toDouble()
-        val totalBlockReward = blockService!!.getTotalBlockReward().data?.let { BigDecimal(it) }
+        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, RANKING_BY_BALANCE)
+        val accountDOList: List<AccountDO?> = accountRepository.findAllOrderByBalance(pageable).content
+//        val totalBlockReward = blockService.getTotalBlockReward().data?.toDouble()
+        val totalBlockReward = blockService.getTotalBlockReward().data?.let { BigDecimal(it) }
         val accountRanking: List<AccountRankingVO> = accountDOList.stream().map { accountDO ->
             val accountRankingVO = AccountRankingVO()
             accountRankingVO.address = accountDO?.address
@@ -74,9 +73,9 @@ class AccountServiceImpl : AccountService {
 
     override fun getInfoByAddress(address: String): Result<AccountInfoResp?> {
 
-        val accountDO: AccountDO? = accountRepository!!.findByAddress(address)
+        val accountDO: AccountDO? = accountRepository.findByAddress(address)
 
-        val tokenHoldings: List<TokenVO>? = tokenService!!.getTokenHoldingsByHolder(address).data
+        val tokenHoldings: List<TokenVO>? = tokenService.getTokenHoldingsByHolder(address).data
 
         val accountInfoResp = AccountInfoResp().apply {
             this.address = accountDO?.address
@@ -90,7 +89,7 @@ class AccountServiceImpl : AccountService {
     }
 
     override fun checkAccountIsContract(address: String): Result<Boolean> {
-        return Result.success(accountRepository!!.findByAddress(address)?.isContract == 1)
+        return Result.success(accountRepository.findByAddress(address)?.isContract == 1)
     }
 
 }

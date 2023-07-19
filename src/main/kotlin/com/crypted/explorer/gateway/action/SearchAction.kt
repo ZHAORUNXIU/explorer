@@ -14,8 +14,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
-import org.springframework.http.MediaType
-import javax.annotation.Resource
 import javax.validation.constraints.NotNull
 
 @RestController
@@ -23,14 +21,11 @@ import javax.validation.constraints.NotNull
 @Validated
 @Component
 @Tag(name = "Search Service API", description = "API endpoints related to searching operations")
-class SearchAction {
+class SearchAction(private val searchService: SearchService)  {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(SearchAction::class.java)
     }
-
-    @Resource
-    private val searchService: SearchService? = null
 
     @GetMapping
     @Operation(summary = "Get searching type", description = "Get the searching type of provided param")
@@ -43,7 +38,7 @@ class SearchAction {
 
         LOG.info(Log.format("success", Log.kv("api", "/search/")))
 
-        val searchType: Int? = searchService!!.getSearchTypeByParam(param).data
+        val searchType: Int? = searchService.getSearchTypeByParam(param).data
         val searchTypeResp = SearchTypeResp().apply {
             this.searchType = searchType
         }

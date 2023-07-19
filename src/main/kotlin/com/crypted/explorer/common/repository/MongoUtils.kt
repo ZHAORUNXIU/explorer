@@ -20,34 +20,21 @@ import kotlin.reflect.KClass
 @Component
 class MongoUtils(private val mongoTemplate: MongoTemplate) {
 
-//    @Resource
-//    private val mongoTemplate: MongoTemplate? = null
-
     fun <T : Any> getByPage(pageable: Pageable, entityType: KClass<T>, andCriteriaList: List<Criteria>? = null, orCriteriaList: List<Criteria>? = null): List<T> {
         val query = Query().with(pageable)
-//        criteria?.let {
-//            query.addCriteria(it)
-//        }
+
         val criteria = Criteria()
         if (!andCriteriaList.isNullOrEmpty()) {
-//            val andCriteriaQuery = Criteria().andOperator(*andCriteriaList.toTypedArray())
-//            query.addCriteria(andCriteriaQuery)
             criteria.andOperator(*andCriteriaList.toTypedArray())
         }
 
         if (!orCriteriaList.isNullOrEmpty()) {
-//            val orCriteriaQuery = Criteria().orOperator(*orCriteriaList.toTypedArray())
-//            query.addCriteria(orCriteriaQuery)
             criteria.orOperator(*orCriteriaList.toTypedArray())
         }
         query.addCriteria(criteria)
+
         return mongoTemplate.find(query, entityType.java)
     }
-
-//    fun <T : Any> count(entityType: KClass<T>): Int {
-//        val query = Query()
-//        return mongoTemplate.count(query, entityType.java).toInt()
-//    }
 
     fun getCountWithNativeQuery(collectionName: String, andCriteriaList: List<Criteria>? = null, orCriteriaList: List<Criteria>? = null): Int {
         val nativeQuery = Document()

@@ -1,15 +1,12 @@
 package com.crypted.explorer.gateway.action
 
 import com.crypted.explorer.api.service.account.AccountService
-import com.crypted.explorer.common.constant.AccountCode
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Log
 import com.crypted.explorer.gateway.model.resp.account.AccountInfoResp
 import com.crypted.explorer.gateway.model.resp.account.AccountRankingResp
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.extensions.Extension
-import io.swagger.v3.oas.annotations.extensions.ExtensionProperty
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -18,7 +15,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
-import javax.annotation.Resource
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
 
@@ -27,14 +23,11 @@ import javax.validation.constraints.NotNull
 @Validated
 @Component
 @Tag(name = "Account Service API", description = "API endpoints related to account operations")
-class AccountAction {
+class AccountAction(private val accountService: AccountService) {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(AccountAction::class.java)
     }
-
-    @Resource
-    private val accountService: AccountService? = null
 
     @GetMapping("/ranking")
     @Operation(summary = "Get ranking", description = "Retrieve account ranking based on the provided pageNumber and pageSize")
@@ -48,7 +41,7 @@ class AccountAction {
 
         LOG.info(Log.format("success", Log.kv("api", "account/ranking")))
 
-        val result: Result<AccountRankingResp?> = accountService!!.getRankingByPage(pageNumber, pageSize)
+        val result: Result<AccountRankingResp?> = accountService.getRankingByPage(pageNumber, pageSize)
 
         return Result.success(result.data)
     }
@@ -71,7 +64,7 @@ class AccountAction {
 //        if (accountService!!.checkAccountIsContract(address).data == true)
 //            return Result.failure(AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.code, AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.message)
 
-        val result: Result<AccountInfoResp?> = accountService!!.getInfoByAddress(address)
+        val result: Result<AccountInfoResp?> = accountService.getInfoByAddress(address)
 
         return Result.success(result.data)
     }

@@ -15,6 +15,8 @@ import com.crypted.explorer.gateway.model.resp.token.TokenInfoResp
 import com.crypted.explorer.gateway.model.resp.token.TokenListResp
 import com.crypted.explorer.gateway.model.vo.token.TokenVO
 import com.crypted.explorer.gateway.model.vo.token.TokenListVO
+import com.crypted.explorer.service.search.SearchServiceImpl
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -24,46 +26,33 @@ import javax.annotation.Resource
 import kotlin.streams.toList
 
 @Service
-class TokenServiceImpl : TokenService {
+class TokenServiceImpl(
+    private val tokenRepository: TokenRepository,
+    private val deployedContractRepository: DeployedContractRepository,
+    private val contractRepository: ContractRepository,
+    private val erc20HoldRepository: Erc20HoldRepository,
+    private val erc721HoldRepository: Erc721HoldRepository,
+    private val erc1155HoldRepository: Erc1155HoldRepository,
+    private val erc20TransferMongoRepository: Erc20TransferMongoRepository,
+    private val erc721TransferMongoRepository: Erc721TransferMongoRepository,
+    private val erc1155TransferMongoRepository: Erc1155TransferMongoRepository
+) : TokenService {
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(TokenServiceImpl::class.java)
+    }
 
     private val SORT_BY_ID = "id"
-
-    @Resource
-    private val tokenRepository: TokenRepository? = null
-
-    @Resource
-    private val deployedContractRepository: DeployedContractRepository? = null
-
-    @Resource
-    private val contractRepository: ContractRepository? = null
-
-    @Resource
-    private val erc20HoldRepository: Erc20HoldRepository? = null
-
-    @Resource
-    private val erc721HoldRepository: Erc721HoldRepository? = null
-
-    @Resource
-    private val erc1155HoldRepository: Erc1155HoldRepository? = null
-
-    @Resource
-    private val erc20TransferMongoRepository: Erc20TransferMongoRepository? = null
-
-    @Resource
-    private val erc721TransferMongoRepository: Erc721TransferMongoRepository? = null
-
-    @Resource
-    private val erc1155TransferMongoRepository: Erc1155TransferMongoRepository? = null
 
     override fun getTokenHoldingsByHolder(holder: String): Result<List<TokenVO>?> {
 
         // EOA & GA
         // erc20 balance -> Quantity
-        val erc20HoldDOList: List<Erc20HoldDO>? = erc20HoldRepository!!.findByHolder(holder)
+        val erc20HoldDOList: List<Erc20HoldDO>? = erc20HoldRepository.findByHolder(holder)
         // erc721 and erc1155 balance -> Unique Tokens
-//        val erc721HoldCountingMap: Map<Long, Long>? = erc721HoldRepository!!.findByHolder(holder)
+//        val erc721HoldCountingMap: Map<Long, Long>? = erc721HoldRepository.findByHolder(holder)
 //            ?.stream()?.collect(Collectors.groupingBy(Erc721HoldDO::tokenId, Collectors.counting()))
-//        val erc1155HoldCountingMap: Map<Long, Long>? = erc1155HoldRepository!!.findByHolder(holder)
+//        val erc1155HoldCountingMap: Map<Long, Long>? = erc1155HoldRepository.findByHolder(holder)
 //            ?.stream()?.collect(Collectors.groupingBy(Erc1155HoldDO::tokenId, Collectors.counting()))
 //        val mergedMap = mutableMapOf<Long, Long>()
 //        erc721HoldCountingMap?.let { mergedMap.putAll(it) }
@@ -73,7 +62,7 @@ class TokenServiceImpl : TokenService {
             // erc20
             erc20HoldDOList?.stream()?.map { erc20HoldDO ->
                 val tokenVO = TokenVO()
-                val tokenDO: TokenDO? = erc20HoldDO.holder?.let { tokenRepository!!.findByAddress(it)}
+                val tokenDO: TokenDO? = erc20HoldDO.holder?.let { tokenRepository.findByAddress(it) }
                 tokenVO.name = tokenDO?.let { this.getTokenName(it).data }
                 tokenVO.tokenSymbol = tokenDO?.symbol
                 tokenVO.tokenBalance = erc20HoldDO.balance
@@ -85,7 +74,7 @@ class TokenServiceImpl : TokenService {
 //                .map { entry ->
 //                    val tokenVO = TokenVO()
 //                    val tokenId = entry.key
-//                    val tokenDO: TokenDO = tokenId.let { tokenRepository!!.findById(it).get() }
+//                    val tokenDO: TokenDO = tokenId.let { tokenRepository.findById(it).get() }
 //                    tokenVO.name = tokenDO.let { this.getTokenName(it).data }
 //                    tokenVO.tokenSymbol = tokenDO.symbol
 //                    tokenVO.tokenBalance = entry.value.toString()
@@ -100,7 +89,7 @@ class TokenServiceImpl : TokenService {
     override fun getListByPage(pageNumber: Int, pageSize: Int): Result<TokenListResp?> {
 
         val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_ID)
-        val tokenDOList: List<TokenDO?> = tokenRepository!!.findAll(pageable).content
+        val tokenDOList: List<TokenDO?> = tokenRepository.findAll(pageable).content
 
         val tokenList: List<TokenListVO?> = tokenDOList.stream().map { tokenDO ->
             val tokenListVO = TokenListVO()
@@ -124,7 +113,7 @@ class TokenServiceImpl : TokenService {
 
     override fun getInfoByContractAddress(address: String): Result<TokenInfoResp?> {
 
-        val tokenDO: TokenDO? = tokenRepository!!.findByAddress(address)
+        val tokenDO: TokenDO? = tokenRepository.findByAddress(address)
         tokenDO?.let {
             val tokenInfoResp = TokenInfoResp().apply {
                 this.name = tokenDO.let { getTokenName(it).data }
@@ -143,9 +132,9 @@ class TokenServiceImpl : TokenService {
 
     private fun getTokenName(tokenDO: TokenDO): Result<String?> {
 
-        val contractId = deployedContractRepository!!.findById(tokenDO.deployedContractId!!).get().contractId
+        val contractId = deployedContractRepository.findById(tokenDO.deployedContractId!!).get().contractId
 
-        return Result.success(contractId?.let { contractRepository!!.findById(it).get().name })
+        return Result.success(contractId?.let { contractRepository.findById(it).get().name })
     }
 
     private fun getTotalTransfers(tokenDO: TokenDO): Int? {
@@ -154,9 +143,9 @@ class TokenServiceImpl : TokenService {
         val address = tokenDO.address
 
         return when (type) {
-            TokenType.ERC20.value -> address?.let { erc20TransferMongoRepository!!.countByTokenAddress(it) }
-            TokenType.ERC721.value -> address?.let { erc721TransferMongoRepository!!.countByTokenAddress(it) }
-            TokenType.ERC1155.value -> address?.let { erc1155TransferMongoRepository!!.countByTokenAddress(it) }
+            TokenType.ERC20.value -> address?.let { erc20TransferMongoRepository.countByTokenAddress(it) }
+            TokenType.ERC721.value -> address?.let { erc721TransferMongoRepository.countByTokenAddress(it) }
+            TokenType.ERC1155.value -> address?.let { erc1155TransferMongoRepository.countByTokenAddress(it) }
             else -> 0
         }
     }

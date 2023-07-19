@@ -28,10 +28,7 @@ import org.springframework.dao.EmptyResultDataAccessException
 
 @RestController
 @ControllerAdvice
-class WebExceptionHandler {
-
-    @Resource
-    private val i18nHelper: I18nHelper? = null
+class WebExceptionHandler(private val i18nHelper: I18nHelper) {
 
     /**
      * HttpStatus 400 - Bad Request
