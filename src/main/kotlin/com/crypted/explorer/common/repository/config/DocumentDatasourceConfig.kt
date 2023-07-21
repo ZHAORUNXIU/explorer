@@ -61,16 +61,16 @@ class DocumentDatasourceConfig : AbstractMongoClientConfiguration() {
         val ks = KeyStore.getInstance("JKS")
         log.info("### env ::: $env")
 
-//        if ("local".equals(env)) {
-//            val file =  ResourceUtils.getFile(trustStore).absoluteFile
-//            ks.load(FileInputStream(file.absoluteFile), trustStorePassword.toCharArray())
-//
-//        } else {
-//            val inputStream = ClassPathResource(trustStore).inputStream
-//            ks.load(inputStream, trustStorePassword.toCharArray())
-//        }
-        val file =  ResourceUtils.getFile(trustStore).absoluteFile
-        ks.load(FileInputStream(file.absoluteFile), trustStorePassword.toCharArray())
+        if ("local".equals(env)) {
+            val file =  ResourceUtils.getFile(trustStore).absoluteFile
+            ks.load(FileInputStream(file.absoluteFile), trustStorePassword.toCharArray())
+
+        } else {
+            val inputStream = ClassPathResource(trustStore).inputStream
+            ks.load(inputStream, trustStorePassword.toCharArray())
+        }
+//        val file =  ResourceUtils.getFile(trustStore).absoluteFile
+//        ks.load(FileInputStream(file.absoluteFile), trustStorePassword.toCharArray())
 
         val trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         trustFactory.init(ks)
