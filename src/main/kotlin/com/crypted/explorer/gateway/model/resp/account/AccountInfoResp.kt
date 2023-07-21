@@ -7,7 +7,7 @@ import java.io.Serializable
 class AccountInfoResp : Serializable {
     @Schema(description = "address", type = "string")
     var address: String? = null
-    @Schema(description = "balance", type = "string")
+    @Schema(description = "balance", type = "string", format = "wei")
     var balance: String? = null
     @Schema(description = "symbol", type = "string")
     var symbol: String? = null

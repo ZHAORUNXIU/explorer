@@ -10,7 +10,7 @@ class TokenInfoResp : Serializable {
     var symbol: String? = null
     @Schema(description = "address", type = "string")
     var address: String? = null
-    @Schema(description = "totalSupply", type = "string")
+    @Schema(description = "totalSupply", type = "string", format = "wei")
     var totalSupply: String? = null
     @Schema(description = "totalTransfer", type = "integer")
     var totalTransfer: Int? = 0

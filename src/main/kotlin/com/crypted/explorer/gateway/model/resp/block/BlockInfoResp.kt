@@ -6,11 +6,11 @@ import java.io.Serializable
 class BlockInfoResp : Serializable {
     @Schema(description = "blockNumber", type = "integer")
     var blockNumber: Int? = 0
-    @Schema(description = "timestamp", type = "string")
+    @Schema(description = "timestamp", type = "string", format = "second")
     var timestamp: String? = null
     @Schema(description = "txCount", type = "integer")
     var txCount: Int? = 0
-    @Schema(description = "blockReward", type = "string")
+    @Schema(description = "blockReward", type = "string", format = "wei")
     var blockReward: String? = null
     @Schema(description = "symbol", type = "string")
     var symbol: String? = null

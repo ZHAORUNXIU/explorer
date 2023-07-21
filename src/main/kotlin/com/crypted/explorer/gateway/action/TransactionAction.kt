@@ -34,6 +34,7 @@ class TransactionAction(private val transactionService: TransactionService)  {
     @GetMapping("/list")
     @Operation(summary = "Get list", description = "Retrieve transaction list based on the provided conditions")
     @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "404", description = "Resource Not Found", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
@@ -55,6 +56,7 @@ class TransactionAction(private val transactionService: TransactionService)  {
     @GetMapping("/{txHash}")
     @Operation(summary = "Get info by txHash", description = "Retrieve transaction info based on the provided txHash")
     @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "404", description = "Resource Not Found", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
@@ -71,6 +73,7 @@ class TransactionAction(private val transactionService: TransactionService)  {
     @GetMapping("/history")
     @Operation(summary = "Get history", description = "Retrieve transaction histories")
     @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "404", description = "Resource Not Found", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     fun getHistory(): Result<List<TransactionHistoryVO>?> {
