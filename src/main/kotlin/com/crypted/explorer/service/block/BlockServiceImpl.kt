@@ -52,7 +52,7 @@ class BlockServiceImpl(
             blockListVO.timestamp = blockMongoDO.timestamp.toString()
 //            blockListVO.txCount = transactionService!!.getTransactionAmountByBlockNumber(blockMongoDO.number).data
             blockListVO.txCount = blockMongoDO.transactionCount
-            blockListVO.blockReward = blockMongoDO.blockReward?.let { MathUtils.convertWeiToEther(it) }
+            blockListVO.blockReward = blockMongoDO.blockReward
             blockListVO.symbol = this@BlockServiceImpl.symbol
             blockListVO
         }.toList()
@@ -80,7 +80,7 @@ class BlockServiceImpl(
             this.blockNumber = blockMongoDO.number
             this.timestamp = blockMongoDO.timestamp.toString()
             this.txCount = transactionService.getTransactionAmountByBlockNumber(blockMongoDO.number).data
-            this.blockReward = blockMongoDO.blockReward?.let { MathUtils.convertWeiToEther(it) }
+            this.blockReward = blockMongoDO.blockReward
             this.symbol = this@BlockServiceImpl.symbol
             this.latestBlock = blockMongoRepository.findTopByOrderByNumberDesc().number
         }

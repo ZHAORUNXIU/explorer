@@ -81,6 +81,7 @@ class TokenAction(
         description = "Retrieve contract account details based on the provided contract address"
     )
     @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "404", description = "Resource Not Found", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(
         responseCode = "500",
         description = "System Error",

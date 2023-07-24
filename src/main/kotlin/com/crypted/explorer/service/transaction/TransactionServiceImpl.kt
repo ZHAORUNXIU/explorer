@@ -72,7 +72,7 @@ class TransactionServiceImpl(
             transactionListVO.from = transactionMongoDO.from
             transactionListVO.to = transactionMongoDO.to
             transactionListVO.value = transactionMongoDO.value
-            transactionListVO.txFee = transactionMongoDO.fee?.let { MathUtils.convertWeiToEther(it) }
+            transactionListVO.txFee = transactionMongoDO.fee
             transactionListVO.symbol = this@TransactionServiceImpl.symbol
             transactionListVO
         }.toList()
@@ -97,7 +97,7 @@ class TransactionServiceImpl(
             this.from = transactionMongoDO?.from
             this.to = transactionMongoDO?.to
             this.value = transactionMongoDO?.value
-            this.txFee = transactionMongoDO?.fee?.let { MathUtils.convertWeiToEther(it) }
+            this.txFee = transactionMongoDO?.fee
             this.symbol = this@TransactionServiceImpl.symbol
             this.status = transactionMongoDO?.status
         }
