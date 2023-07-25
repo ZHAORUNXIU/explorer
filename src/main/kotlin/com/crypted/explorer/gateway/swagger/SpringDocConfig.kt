@@ -2,8 +2,9 @@ package com.crypted.explorer.gateway.swagger
 
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Contact
+import io.swagger.v3.oas.models.servers.Server
 import org.springdoc.core.GroupedOpenApi
-import org.springdoc.core.customizers.OpenApiCustomiser
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -12,9 +13,15 @@ import org.springframework.context.annotation.Configuration
  */
 @Configuration
 class SpringDocConfig {
+
+    @Value("\${server.url}")
+    private lateinit var serverUrl: String
+
     @Bean
-    fun defaultOpenAPI(): OpenAPI {
-        return OpenAPI().info(info())
+    fun customOpenAPI(): OpenAPI {
+        return OpenAPI()
+            .info(info())
+            .addServersItem(Server().url(serverUrl))
     }
 
     fun info(): io.swagger.v3.oas.models.info.Info {
