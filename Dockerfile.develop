@@ -6,8 +6,8 @@ WORKDIR /home/app
 RUN gradle clean build
 
 FROM openjdk:17-jdk-slim
-COPY build/libs/explorer-0.0.1-SNAPSHOT.jar ks-explorer-service-0.0.1-SNAPSHOT.jar
+COPY --from=build /home/app/build/libs/explorer-0.0.1-SNAPSHOT.jar /app/ks-explorer-service-0.0.1-SNAPSHOT.jar
 EXPOSE 4000
 ENV ENV_NAME=dev
 
-ENTRYPOINT ["java", "-jar", "ks-explorer-service-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "/app/ks-explorer-service-0.0.1-SNAPSHOT.jar"]
