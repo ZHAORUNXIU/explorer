@@ -62,7 +62,7 @@ class TokenServiceImpl(
             // erc20
             erc20HoldDOList?.stream()?.map { erc20HoldDO ->
                 val tokenVO = TokenVO()
-                val tokenDO: TokenDO? = erc20HoldDO.holder?.let { tokenRepository.findByAddress(it) }
+                val tokenDO: TokenDO? = erc20HoldDO.tokenAddress?.let { tokenRepository.findByAddress(it) }
                 tokenVO.name = tokenDO?.let { this.getTokenName(it).data }
                 tokenVO.tokenSymbol = tokenDO?.symbol
                 tokenVO.tokenBalance = erc20HoldDO.balance
