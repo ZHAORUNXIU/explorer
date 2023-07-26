@@ -61,13 +61,17 @@ class TokenServiceImpl(
         val tokenHoldings: List<TokenVO> = listOfNotNull(
             // erc20
             erc20HoldDOList?.stream()?.map { erc20HoldDO ->
-                val tokenVO = TokenVO()
                 val tokenDO: TokenDO? = erc20HoldDO.tokenAddress?.let { tokenRepository.findByAddress(it) }
-                tokenVO.name = tokenDO?.let { this.getTokenName(it).data }
-                tokenVO.tokenSymbol = tokenDO?.symbol
-                tokenVO.tokenBalance = erc20HoldDO.balance
-                tokenVO.imageUrl = tokenDO?.image
-                tokenVO
+                if (tokenDO != null) {
+                    val tokenVO = TokenVO()
+                    tokenVO.name = tokenDO.let { this.getTokenName(it).data }
+                    tokenVO.tokenSymbol = tokenDO.symbol
+                    tokenVO.tokenBalance = erc20HoldDO.balance
+                    tokenVO.imageUrl = tokenDO.image
+                    tokenVO
+                } else {
+                    null
+                }
             }?.toList(),
             // erc721 and erc1155
 //            mergedMap.entries.stream()
@@ -81,7 +85,7 @@ class TokenServiceImpl(
 //                    tokenVO.imageUrl = tokenDO.image
 //                    tokenVO
 //                }?.toList(),
-        ).flatten().toList()
+        ).flatten().filterNotNull().toList()
 
         return Result.success(tokenHoldings)
     }
