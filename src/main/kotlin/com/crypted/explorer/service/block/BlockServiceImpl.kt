@@ -38,7 +38,7 @@ class BlockServiceImpl(
 
     private val COLLECTION_NAME_BLOCKS = "blocks"
 
-    @Value("\${block.symbol}")
+    @Value("\${block.reward.symbol}")
     private lateinit var symbol: String
 
     override fun getListByPage(pageNumber: Int, pageSize: Int): Result<BlockListResp?> {

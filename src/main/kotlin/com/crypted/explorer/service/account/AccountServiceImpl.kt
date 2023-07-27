@@ -33,7 +33,7 @@ class AccountServiceImpl(
 
     private val RANKING_BY_BALANCE = "balance"
 
-    @Value("\${account.symbol}")
+    @Value("\${account.balance.symbol}")
     private lateinit var symbol: String
 
     override fun getRankingByPage(pageNumber: Int, pageSize: Int): Result<AccountRankingResp?> {

@@ -1,6 +1,6 @@
 package com.crypted.explorer.service.token
 
-import com.crypted.explorer.api.model.domain.token.Erc1155TransferMongoDO
+import com.crypted.explorer.api.model.domain.token.transfer.Erc1155TransferMongoDO
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
 

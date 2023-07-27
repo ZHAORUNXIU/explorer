@@ -1,32 +1,36 @@
 package com.crypted.explorer.service.token
 
-import com.crypted.explorer.api.model.domain.token.Erc1155HoldDO
-import com.crypted.explorer.api.model.domain.token.Erc20HoldDO
-import com.crypted.explorer.api.model.domain.token.Erc721HoldDO
-import com.crypted.explorer.api.model.domain.token.TokenDO
+import com.crypted.explorer.api.model.domain.token.*
+import com.crypted.explorer.api.model.domain.token.transfer.Erc1155TransferMongoDO
+import com.crypted.explorer.api.model.domain.token.transfer.Erc20TransferMongoDO
+import com.crypted.explorer.api.model.domain.token.transfer.Erc721TransferMongoDO
+import com.crypted.explorer.api.model.domain.token.transfer.TokenTransferMongoDO
 import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.constant.AccountCode
-import com.crypted.explorer.common.constant.SearchType
+import com.crypted.explorer.common.constant.TokenCode
 import com.crypted.explorer.common.constant.TokenType
 import com.crypted.explorer.common.model.Result
+import com.crypted.explorer.common.repository.MongoUtils
 import com.crypted.explorer.common.util.MathUtils
 import com.crypted.explorer.common.util.Text
 import com.crypted.explorer.gateway.model.resp.token.TokenInfoResp
 import com.crypted.explorer.gateway.model.resp.token.TokenListResp
+import com.crypted.explorer.gateway.model.resp.token.TokenTransferListResp
 import com.crypted.explorer.gateway.model.vo.token.TokenVO
 import com.crypted.explorer.gateway.model.vo.token.TokenListVO
-import com.crypted.explorer.service.search.SearchServiceImpl
+import com.crypted.explorer.gateway.model.vo.token.TokenTransferListVO
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Service
-import java.util.stream.Collectors
-import javax.annotation.Resource
-import kotlin.streams.toList
+import kotlin.reflect.KClass
 
 @Service
 class TokenServiceImpl(
+    private val mongoUtils: MongoUtils,
     private val tokenRepository: TokenRepository,
     private val deployedContractRepository: DeployedContractRepository,
     private val contractRepository: ContractRepository,
@@ -43,6 +47,19 @@ class TokenServiceImpl(
     }
 
     private val SORT_BY_ID = "id"
+
+    private val SORT_BY_CREATED_AT = "createdAt"
+
+    private val FIELD_NAME_TOKEN_ADDRESS = "tokenAddress"
+
+    private val COLLECTION_NAME_ERC20_TRANSFERS = "erc20_transfers"
+
+    private val COLLECTION_NAME_ERC721_TRANSFERS = "erc1721_transfers"
+
+    private val COLLECTION_NAME_ERC1155_TRANSFERS = "erc1155_transfers"
+
+    @Value("\${token.transfer.value.symbol}")
+    private lateinit var symbol: String
 
     override fun getTokenHoldingsByHolder(holder: String): Result<List<TokenVO>?> {
 
@@ -134,6 +151,53 @@ class TokenServiceImpl(
         }
     }
 
+    override fun getTransferListByPage(
+        tokenAddress: String,
+        pageNumber: Int,
+        pageSize: Int
+    ): Result<TokenTransferListResp?> {
+
+        val tokenDO: TokenDO? = tokenRepository.findByAddress(tokenAddress)
+        tokenDO?.let {
+            val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_CREATED_AT)
+
+            val tokenTransferMongoDOList: List<TokenTransferMongoDO> = when (tokenDO.type?.let { Text.cleanAndLowercase(it) }) {
+                TokenType.ERC20.value -> this.findByTokenAddress(tokenAddress, pageable, Erc20TransferMongoDO::class)
+                TokenType.ERC721.value -> this.findByTokenAddress(tokenAddress, pageable, Erc721TransferMongoDO::class)
+                TokenType.ERC1155.value -> this.findByTokenAddress(tokenAddress, pageable, Erc1155TransferMongoDO::class)
+                else -> emptyList()
+            }
+            val totalTx: Int = when (tokenDO.type?.let { Text.cleanAndLowercase(it) }) {
+                TokenType.ERC20.value -> this.countByTokenAddress(tokenAddress, COLLECTION_NAME_ERC20_TRANSFERS)
+                TokenType.ERC721.value -> this.countByTokenAddress(tokenAddress, COLLECTION_NAME_ERC721_TRANSFERS)
+                TokenType.ERC1155.value -> this.countByTokenAddress(tokenAddress, COLLECTION_NAME_ERC1155_TRANSFERS)
+                else -> 0
+            }
+
+            val tokenTransferList: List<TokenTransferListVO?> = tokenTransferMongoDOList.stream().map { tokenTransferMongoDO ->
+                val tokenTransferListVO = TokenTransferListVO()
+                tokenTransferListVO.txHash = tokenTransferMongoDO.transactionHash
+                tokenTransferListVO.method = tokenTransferMongoDO.functionName
+                tokenTransferListVO.blockNumber = tokenTransferMongoDO.blockNumber
+                tokenTransferListVO.timestamp = tokenTransferMongoDO.createdAt?.time?.div(1000)
+                tokenTransferListVO.from = tokenTransferMongoDO.from
+                tokenTransferListVO.to = tokenTransferMongoDO.to
+                tokenTransferListVO.value = tokenTransferMongoDO.value
+                tokenTransferListVO.symbol = this@TokenServiceImpl.symbol
+                tokenTransferListVO
+            }.toList()
+
+            return Result.success(TokenTransferListResp().apply {
+                this.totalPage = MathUtils.ceilDiv(totalTx, pageSize)
+                this.totalTx = totalTx
+                this.tokenTransferList = tokenTransferList
+            })
+        } ?: run {
+            return Result.failure(TokenCode.UNKNOWN_TOKEN.code, TokenCode.UNKNOWN_TOKEN.message)
+        }
+    }
+
+
     private fun getTokenName(tokenDO: TokenDO): Result<String?> {
 
         val contractId = deployedContractRepository.findById(tokenDO.deployedContractId!!).get().contractId
@@ -152,5 +216,21 @@ class TokenServiceImpl(
             TokenType.ERC1155.value -> address?.let { erc1155TransferMongoRepository.countByTokenAddress(it) }
             else -> 0
         }
+    }
+
+    private fun <T : Any> findByTokenAddress(
+        tokenAddress: String,
+        pageable: Pageable,
+        entityType: KClass<T>
+    ): List<T> {
+        val criteriaList = mutableListOf<Criteria>()
+        criteriaList.add(Criteria.where(FIELD_NAME_TOKEN_ADDRESS).`is`(tokenAddress))
+        return mongoUtils.getByPage(pageable, entityType, criteriaList)
+    }
+
+    private fun countByTokenAddress(tokenAddress: String, collectionName: String): Int {
+        val criteriaList = mutableListOf<Criteria>()
+        criteriaList.add(Criteria.where(FIELD_NAME_TOKEN_ADDRESS).`is`(tokenAddress))
+        return mongoUtils.getCountWithNativeQuery(collectionName, criteriaList)
     }
 }

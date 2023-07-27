@@ -1,18 +1,11 @@
-package com.crypted.explorer.api.model.domain.token
+package com.crypted.explorer.api.model.domain.token.transfer
 
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
-import org.springframework.data.mongodb.core.mapping.Document
 import java.io.Serializable
+import java.util.*
 
-
-/**
- *
- * @author Raine.Jo
- * @date 2023-07-10 16:00:00
- */
-@Document(collection = "erc721_transfers")
-class Erc721TransferMongoDO : Serializable {
+abstract class TokenTransferMongoDO : Serializable {
     @Id
     var id: ObjectId? = null
     var blockNumber = 0
@@ -23,4 +16,6 @@ class Erc721TransferMongoDO : Serializable {
     var to: String? = null
     var value: String? = null
     var tokenAddress: String? = null
+    var createdAt: Date? = null
+    var updatedAt: Date? = null
 }

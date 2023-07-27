@@ -41,7 +41,7 @@ class TransactionServiceImpl(
 
     private val SORT_BY_CREATED_AT = "createdAt"
 
-    @Value("\${transaction.symbol}")
+    @Value("\${transaction.value.symbol}")
     private lateinit var symbol: String
 
     @Value("\${transaction.history.size}")
