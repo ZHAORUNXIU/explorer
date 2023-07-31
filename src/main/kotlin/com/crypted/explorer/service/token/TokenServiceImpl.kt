@@ -58,8 +58,8 @@ class TokenServiceImpl(
 
     private val COLLECTION_NAME_ERC1155_TRANSFERS = "erc1155_transfers"
 
-    @Value("\${token.transfer.value.symbol}")
-    private lateinit var symbol: String
+//    @Value("\${token.transfer.value.symbol}")
+//    private lateinit var symbol: String
 
     override fun getTokenHoldingsByHolder(holder: String): Result<List<TokenVO>?> {
 
@@ -183,7 +183,7 @@ class TokenServiceImpl(
                 tokenTransferListVO.from = tokenTransferMongoDO.from
                 tokenTransferListVO.to = tokenTransferMongoDO.to
                 tokenTransferListVO.value = tokenTransferMongoDO.value
-                tokenTransferListVO.symbol = this@TokenServiceImpl.symbol
+                tokenTransferListVO.symbol = tokenDO.symbol
                 tokenTransferListVO
             }.toList()
 
