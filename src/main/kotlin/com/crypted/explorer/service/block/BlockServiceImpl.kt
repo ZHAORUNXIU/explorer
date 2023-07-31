@@ -6,6 +6,7 @@ import com.crypted.explorer.api.service.block.BlockService
 import com.crypted.explorer.api.service.transaction.TransactionService
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.repository.MongoUtils
+import com.crypted.explorer.common.repository.Paging
 import com.crypted.explorer.common.util.MathUtils
 import com.crypted.explorer.gateway.model.resp.block.BlockInfoResp
 import com.crypted.explorer.gateway.model.resp.block.BlockListResp
@@ -43,8 +44,12 @@ class BlockServiceImpl(
 
     override fun getListByPage(pageNumber: Int, pageSize: Int): Result<BlockListResp?> {
 
-        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_BLOCK_NUMBER)
-        val blockMongoDOList: List<BlockMongoDO> = mongoUtils.getByPage(pageable, BlockMongoDO::class)
+//        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_BLOCK_NUMBER)
+        val paging: Paging = Paging(pageNumber, pageSize, Sort.Direction.DESC, SORT_BY_BLOCK_NUMBER, blockMongoRepository.findTopByOrderByNumberDesc().number)
+
+//        val blockMongoDOList: List<BlockMongoDO> = mongoUtils.getByPage(pageable, BlockMongoDO::class)
+        val blockMongoDOList: List<BlockMongoDO> = mongoUtils.getByPageV2(paging, BlockMongoDO::class)
+
 
         val blockList: List<BlockListVO?> = blockMongoDOList.stream().map { blockMongoDO ->
             val blockListVO = BlockListVO()

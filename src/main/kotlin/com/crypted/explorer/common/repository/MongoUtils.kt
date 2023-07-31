@@ -3,6 +3,7 @@ package com.crypted.explorer.common.repository
 import com.crypted.explorer.api.model.domain.block.BlockMongoDO
 import com.crypted.explorer.api.service.account.AccountService
 import org.bson.Document
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -22,6 +23,32 @@ class MongoUtils(private val mongoTemplate: MongoTemplate) {
 
     fun <T : Any> getByPage(pageable: Pageable, entityType: KClass<T>, andCriteriaList: List<Criteria>? = null, orCriteriaList: List<Criteria>? = null): List<T> {
         val query = Query().with(pageable)
+
+        val criteria = Criteria()
+        if (!andCriteriaList.isNullOrEmpty()) {
+            criteria.andOperator(*andCriteriaList.toTypedArray())
+        }
+
+        if (!orCriteriaList.isNullOrEmpty()) {
+            criteria.orOperator(*orCriteriaList.toTypedArray())
+        }
+        query.addCriteria(criteria)
+
+        return mongoTemplate.find(query, entityType.java)
+    }
+
+    fun <T : Any> getByPageV2(paging: Paging, entityType: KClass<T>, andCriteriaList: List<Criteria>? = null, orCriteriaList: List<Criteria>? = null): List<T> {
+
+        val pageable = PageRequest.of(0, paging.size, paging.direction, paging.property)
+        val query = Query().with(pageable)
+
+        if (paging.direction.isDescending) {
+            val startValue: Int = paging.firstValue - (paging.page - 1) * paging.size + 1
+            query.addCriteria(Criteria.where(paging.property).lte(startValue))
+        } else {
+            val startValue: Int = paging.firstValue + (paging.page - 1) * paging.size
+            query.addCriteria(Criteria.where(paging.property).gte(startValue))
+        }
 
         val criteria = Criteria()
         if (!andCriteriaList.isNullOrEmpty()) {
