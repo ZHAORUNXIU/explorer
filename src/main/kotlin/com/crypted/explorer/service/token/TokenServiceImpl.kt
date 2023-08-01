@@ -19,6 +19,7 @@ import com.crypted.explorer.gateway.model.resp.token.TokenTransferListResp
 import com.crypted.explorer.gateway.model.vo.token.TokenVO
 import com.crypted.explorer.gateway.model.vo.token.TokenListVO
 import com.crypted.explorer.gateway.model.vo.token.TokenTransferListVO
+import com.crypted.explorer.gateway.model.vo.token.TokenTransferVO
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
@@ -81,7 +82,7 @@ class TokenServiceImpl(
                 val tokenDO: TokenDO? = erc20HoldDO.tokenAddress?.let { tokenRepository.findByAddress(it) }
                 if (tokenDO != null) {
                     val tokenVO = TokenVO()
-                    tokenVO.name = tokenDO.let { this.getTokenName(it).data }
+                    tokenVO.name = tokenDO.let { this.getTokenName(it) }
                     tokenVO.tokenSymbol = tokenDO.symbol
                     tokenVO.tokenBalance = erc20HoldDO.balance
                     tokenVO.imageUrl = tokenDO.image
@@ -116,7 +117,7 @@ class TokenServiceImpl(
             val tokenListVO = TokenListVO()
             tokenListVO.address = tokenDO!!.address
             tokenListVO.symbol = tokenDO.symbol
-            tokenListVO.name = getTokenName(tokenDO).data
+            tokenListVO.name = getTokenName(tokenDO)
             tokenListVO.imageUrl = tokenDO.image
             tokenListVO
         }.toList()
@@ -137,7 +138,7 @@ class TokenServiceImpl(
         val tokenDO: TokenDO? = tokenRepository.findByAddress(address)
         tokenDO?.let {
             val tokenInfoResp = TokenInfoResp().apply {
-                this.name = tokenDO.let { getTokenName(it).data }
+                this.name = tokenDO.let { getTokenName(it) }
                 this.symbol = tokenDO.symbol
                 this.address = tokenDO.address
                 this.totalSupply = tokenDO.supply
@@ -197,12 +198,27 @@ class TokenServiceImpl(
         }
     }
 
+    override fun getTokenInfoByTxHash(txHash: String): Result<TokenTransferVO?> {
+        val erc20TransferMongoDO: Erc20TransferMongoDO? = erc20TransferMongoRepository.findByTransactionHash(txHash)
+        val tokenDO: TokenDO? = erc20TransferMongoDO?.tokenAddress?.let { tokenRepository.findByAddress(it) }
+        val tokenTransferVO = TokenTransferVO().apply {
+            this.txHash = erc20TransferMongoDO?.transactionHash
+            this.from = erc20TransferMongoDO?.from
+            this.to = erc20TransferMongoDO?.to
+            this.value = erc20TransferMongoDO?.value
+            this.name = tokenDO?.let { getTokenName(it) }
+            this.symbol = tokenDO?.symbol
+        }
+        return Result.success(tokenTransferVO)
+    }
 
-    private fun getTokenName(tokenDO: TokenDO): Result<String?> {
+
+
+    private fun getTokenName(tokenDO: TokenDO): String? {
 
         val contractId = deployedContractRepository.findById(tokenDO.deployedContractId!!).get().contractId
 
-        return Result.success(contractId?.let { contractRepository.findById(it).get().name })
+        return contractId?.let { contractRepository.findById(it).get().name }
     }
 
     private fun getTotalTransfers(tokenDO: TokenDO): Int? {

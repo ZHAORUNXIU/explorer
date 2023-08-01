@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Text
 import org.springframework.dao.EmptyResultDataAccessException
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
 
 @RestController
@@ -96,7 +97,7 @@ class WebExceptionHandler(private val i18nHelper: I18nHelper) {
      * HttpStatus 415 - Unsupported Media Type
      */
     @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
-    fun handleHttpMediaTypeNotSupportedException(req: HttpServletRequest, res: HttpServletResponse, e: Exception) {
+    fun handleHttpMediaTypeNotSupportedException(req: HttpServletRequest, res: HttpServletResponse, e: HttpMediaTypeNotSupportedException) {
         LOG.error(
             format(
                 LOG_PREFIX + "Unsupported media type",
@@ -144,6 +145,27 @@ class WebExceptionHandler(private val i18nHelper: I18nHelper) {
                 LOG_PREFIX + "Method parameter exception",
                 kv(URI, req.requestURI),
                 kv(MESSAGE, e.message),
+                kv(HEADERS, getHeaders(req)),
+//                kv(USER_ID, ReqContext.get().getUserId())
+            )
+        )
+        write(res, Code.ILLEGAL_PARAM, e.message)
+    }
+
+    /**
+     * 502 - Method argument exception
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    fun methodArgumentTypeMismatchException(
+        req: HttpServletRequest,
+        res: HttpServletResponse,
+        e: MethodArgumentTypeMismatchException
+    ) {
+        LOG.warn(
+            format(
+                LOG_PREFIX + "Method parameter exception",
+                kv(URI, req.requestURI),
+                e.message?.let { kv(MESSAGE, it) },
                 kv(HEADERS, getHeaders(req)),
 //                kv(USER_ID, ReqContext.get().getUserId())
             )

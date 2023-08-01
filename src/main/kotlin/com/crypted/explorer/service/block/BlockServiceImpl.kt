@@ -78,9 +78,9 @@ class BlockServiceImpl(
         return Result.success(blockListResp)
     }
 
-    override fun getInfoByBlockNumber(blockNumber: Long): Result<BlockInfoResp?> {
+    override fun getInfoByBlockNumber(blockNumber: BigInteger): Result<BlockInfoResp?> {
 
-        val blockMongoDO: BlockMongoDO = blockMongoRepository.findByNumber(blockNumber)
+        val blockMongoDO: BlockMongoDO = blockMongoRepository.findByNumber(blockNumber.toLong())
 
         val blockInfoResp = BlockInfoResp().apply {
             this.blockNumber = blockMongoDO.number
