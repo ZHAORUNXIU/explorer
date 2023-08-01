@@ -7,7 +7,7 @@ import com.crypted.explorer.gateway.model.resp.block.BlockListResp
 interface BlockService {
     fun getListByPage(pageNumber: Int, pageSize: Int): Result<BlockListResp?>
 
-    fun getInfoByBlockNumber(blockNumber: Int): Result<BlockInfoResp?>
+    fun getInfoByBlockNumber(blockNumber: Long): Result<BlockInfoResp?>
 
     fun getTotalBlockReward(): Result<String>
 

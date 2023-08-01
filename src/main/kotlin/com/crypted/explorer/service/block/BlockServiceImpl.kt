@@ -14,6 +14,7 @@ import com.crypted.explorer.gateway.model.vo.block.BlockListVO
 import com.crypted.explorer.service.account.AccountServiceImpl
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -77,7 +78,7 @@ class BlockServiceImpl(
         return Result.success(blockListResp)
     }
 
-    override fun getInfoByBlockNumber(blockNumber: Int): Result<BlockInfoResp?> {
+    override fun getInfoByBlockNumber(blockNumber: Long): Result<BlockInfoResp?> {
 
         val blockMongoDO: BlockMongoDO = blockMongoRepository.findByNumber(blockNumber)
 

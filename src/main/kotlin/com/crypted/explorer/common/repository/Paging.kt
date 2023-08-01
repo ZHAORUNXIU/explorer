@@ -7,5 +7,5 @@ data class Paging(
     val size: Int,
     val direction: Sort.Direction,
     val property: String,
-    val firstValue: Int
+    val firstValue: Long
 )

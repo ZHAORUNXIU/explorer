@@ -52,7 +52,7 @@ class WebExceptionHandler(private val i18nHelper: I18nHelper) {
     }
 
     /**
-     * HttpStatus 400 - Resource Not Found
+     * HttpStatus 404 - Resource Not Found
      */
     @ExceptionHandler(EmptyResultDataAccessException::class)
     fun handleEmptyResultDataAccessException(
