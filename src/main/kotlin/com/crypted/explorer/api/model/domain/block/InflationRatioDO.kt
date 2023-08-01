@@ -15,7 +15,7 @@ import java.util.*
 class InflationRatioDO : Serializable {
     @Id
     var id: ObjectId? = null
-    var blockNumber = 0
+    var blockNumber: Long = 0L
     var ratio: String? = null
     var staticBlockReward: String? = null
     var createdAt: Date? = null

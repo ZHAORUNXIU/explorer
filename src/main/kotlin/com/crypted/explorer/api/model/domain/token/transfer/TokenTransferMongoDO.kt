@@ -8,7 +8,7 @@ import java.util.*
 abstract class TokenTransferMongoDO : Serializable {
     @Id
     var id: ObjectId? = null
-    var blockNumber = 0
+    var blockNumber: Long = 0L
     var transactionHash: String? = null
     var logIndex = 0
     var functionName: String? = null

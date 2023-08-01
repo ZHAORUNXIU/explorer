@@ -25,7 +25,7 @@ class BlockMongoDO : Serializable {
     var fee: String? = null
     var gasLimit: String? = null
     var gasUsed: String? = null
-    var number = 0
+    var number: Long = 0
     var parentHash: String? = null
     var referralFee: String? = null
     var rewardFee: String? = null

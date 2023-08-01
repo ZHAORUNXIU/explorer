@@ -43,10 +43,10 @@ class MongoUtils(private val mongoTemplate: MongoTemplate) {
         val query = Query().with(pageable)
 
         if (paging.direction.isDescending) {
-            val startValue: Int = paging.firstValue - (paging.page - 1) * paging.size + 1
+            val startValue: Long = paging.firstValue - (paging.page - 1) * paging.size + 1
             query.addCriteria(Criteria.where(paging.property).lte(startValue))
         } else {
-            val startValue: Int = paging.firstValue + (paging.page - 1) * paging.size
+            val startValue: Long = paging.firstValue + (paging.page - 1) * paging.size
             query.addCriteria(Criteria.where(paging.property).gte(startValue))
         }
 
