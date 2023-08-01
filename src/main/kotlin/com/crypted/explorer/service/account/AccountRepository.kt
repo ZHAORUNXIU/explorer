@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository
 @Repository
 interface AccountRepository : JpaRepository<AccountDO, Long> {
 
-    fun findByAddress(address: String): AccountDO?
+    fun findByAddress(address: String): AccountDO
 
     @Query("SELECT a FROM AccountDO a ORDER BY CONVERT(a.balance, DECIMAL(65, 2)) DESC")
     fun findAllOrderByBalance(pageable: Pageable): Page<AccountDO>

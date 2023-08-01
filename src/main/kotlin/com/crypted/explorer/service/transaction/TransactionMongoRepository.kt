@@ -21,7 +21,7 @@ interface TransactionMongoRepository : MongoRepository<TransactionMongoDO, Strin
 
     fun findByBlockNumberAndStatus(blockNumber: Long, status: Int, pageable: Pageable): Page<TransactionMongoDO>
 
-    fun findByHash(hash: String): TransactionMongoDO?
+    fun findByHash(hash: String): TransactionMongoDO
 
     fun countByFromOrToAndStatus(from: String, to: String, status: Int): Int
 

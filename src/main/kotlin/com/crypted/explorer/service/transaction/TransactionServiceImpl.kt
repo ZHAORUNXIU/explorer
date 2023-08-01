@@ -93,18 +93,18 @@ class TransactionServiceImpl(
 
     override fun getInfoByTxHash(txHash: String): Result<TransactionInfoResp?> {
 
-        val transactionMongoDO: TransactionMongoDO? = transactionMongoRepository.findByHash(txHash)
+        val transactionMongoDO: TransactionMongoDO = transactionMongoRepository.findByHash(txHash)
 
         val transactionInfoResp = TransactionInfoResp().apply {
-            this.txHash = transactionMongoDO?.hash
-            this.blockNumber = transactionMongoDO?.blockNumber
-            this.timestamp = transactionMongoDO?.createdAt?.time?.div(1000)
-            this.from = transactionMongoDO?.from
-            this.to = transactionMongoDO?.to
-            this.value = transactionMongoDO?.value
-            this.txFee = transactionMongoDO?.fee
+            this.txHash = transactionMongoDO.hash
+            this.blockNumber = transactionMongoDO.blockNumber
+            this.timestamp = transactionMongoDO.createdAt?.time?.div(1000)
+            this.from = transactionMongoDO.from
+            this.to = transactionMongoDO.to
+            this.value = transactionMongoDO.value
+            this.txFee = transactionMongoDO.fee
             this.symbol = this@TransactionServiceImpl.symbol
-            this.status = transactionMongoDO?.status
+            this.status = transactionMongoDO.status
         }
 
         return Result.success(transactionInfoResp)

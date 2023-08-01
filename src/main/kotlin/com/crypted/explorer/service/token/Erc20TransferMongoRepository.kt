@@ -9,5 +9,5 @@ interface Erc20TransferMongoRepository : MongoRepository<Erc20TransferMongoDO, S
 
     fun countByTokenAddress(tokenAddress: String): Int
 
-    fun findByTransactionHash(transactionHash: String): Erc20TransferMongoDO?
+    fun findByTransactionHash(transactionHash: String): Erc20TransferMongoDO
 }

@@ -199,13 +199,13 @@ class TokenServiceImpl(
     }
 
     override fun getTokenInfoByTxHash(txHash: String): Result<TokenTransferVO?> {
-        val erc20TransferMongoDO: Erc20TransferMongoDO? = erc20TransferMongoRepository.findByTransactionHash(txHash)
-        val tokenDO: TokenDO? = erc20TransferMongoDO?.tokenAddress?.let { tokenRepository.findByAddress(it) }
+        val erc20TransferMongoDO: Erc20TransferMongoDO = erc20TransferMongoRepository.findByTransactionHash(txHash)
+        val tokenDO: TokenDO? = erc20TransferMongoDO.tokenAddress?.let { tokenRepository.findByAddress(it) }
         val tokenTransferVO = TokenTransferVO().apply {
-            this.txHash = erc20TransferMongoDO?.transactionHash
-            this.from = erc20TransferMongoDO?.from
-            this.to = erc20TransferMongoDO?.to
-            this.value = erc20TransferMongoDO?.value
+            this.txHash = erc20TransferMongoDO.transactionHash
+            this.from = erc20TransferMongoDO.from
+            this.to = erc20TransferMongoDO.to
+            this.value = erc20TransferMongoDO.value
             this.name = tokenDO?.let { getTokenName(it) }
             this.symbol = tokenDO?.symbol
         }
