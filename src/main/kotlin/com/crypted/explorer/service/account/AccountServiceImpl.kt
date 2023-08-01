@@ -82,6 +82,7 @@ class AccountServiceImpl(
             this.balance = accountDO.balance
             this.symbol = this@AccountServiceImpl.symbol
             this.tokenCount = tokenHoldings?.size
+            this.isContract = accountDO.isContract == 1
             this.tokenHoldings = tokenHoldings
         }
 
