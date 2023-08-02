@@ -47,11 +47,15 @@ class TokenServiceImpl(
         private val LOG = LoggerFactory.getLogger(TokenServiceImpl::class.java)
     }
 
-    private val SORT_BY_ID = "id"
+    private val FIELD_NAME_ID = "id"
 
-    private val SORT_BY_CREATED_AT = "createdAt"
+    private val FIELD_NAME_CREATED_AT = "createdAt"
 
     private val FIELD_NAME_TOKEN_ADDRESS = "tokenAddress"
+
+    private val FIELD_NAME_BLOCKNUMBER = "blockNumber"
+
+    private val FIELD_NAME_LOGINDEX = "logIndex"
 
     private val COLLECTION_NAME_ERC20_TRANSFERS = "erc20_transfers"
 
@@ -110,7 +114,7 @@ class TokenServiceImpl(
 
     override fun getListByPage(pageNumber: Int, pageSize: Int): Result<TokenListResp?> {
 
-        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_ID)
+        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, FIELD_NAME_ID)
         val tokenDOList: List<TokenDO?> = tokenRepository.findAll(pageable).content
 
         val tokenList: List<TokenListVO?> = tokenDOList.stream().map { tokenDO ->
@@ -160,7 +164,10 @@ class TokenServiceImpl(
 
         val tokenDO: TokenDO? = tokenRepository.findByAddress(tokenAddress)
         tokenDO?.let {
-            val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_CREATED_AT)
+            val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by(
+                Sort.Order(Sort.Direction.DESC, FIELD_NAME_BLOCKNUMBER),
+                Sort.Order(Sort.Direction.ASC, FIELD_NAME_LOGINDEX)
+            ))
 
             val tokenTransferMongoDOList: List<TokenTransferMongoDO> = when (tokenDO.type?.let { Text.cleanAndLowercase(it) }) {
                 TokenType.ERC20.value -> this.findByTokenAddress(tokenAddress, pageable, Erc20TransferMongoDO::class)
@@ -180,7 +187,7 @@ class TokenServiceImpl(
                 tokenTransferListVO.txHash = tokenTransferMongoDO.transactionHash
                 tokenTransferListVO.method = tokenTransferMongoDO.functionName
                 tokenTransferListVO.blockNumber = tokenTransferMongoDO.blockNumber
-                tokenTransferListVO.timestamp = tokenTransferMongoDO.createdAt?.time?.div(1000)
+                tokenTransferListVO.blockTimestamp = tokenTransferMongoDO.blockTimestamp
                 tokenTransferListVO.from = tokenTransferMongoDO.from
                 tokenTransferListVO.to = tokenTransferMongoDO.to
                 tokenTransferListVO.value = tokenTransferMongoDO.value
