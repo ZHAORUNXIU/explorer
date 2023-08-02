@@ -5,7 +5,7 @@ import java.io.Serializable
 
 class BlockListVO : Serializable {
     @Schema(description = "blockReward", type = "integer")
-    var blockNumber: Int? = 0
+    var blockNumber: Long? = 0L
     @Schema(description = "timestamp", type = "string", format = "second")
     var timestamp: String? = null
     @Schema(description = "txCount", type = "integer")

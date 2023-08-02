@@ -7,6 +7,8 @@ import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Log
 import com.crypted.explorer.gateway.model.resp.token.TokenInfoResp
 import com.crypted.explorer.gateway.model.resp.token.TokenListResp
+import com.crypted.explorer.gateway.model.resp.token.TokenTransferListResp
+import com.crypted.explorer.gateway.model.resp.transaction.TransactionListResp
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
+import javax.validation.constraints.Max
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
 
@@ -116,6 +119,25 @@ class TokenAction(
             return Result.failure(AccountCode.NOT_CONTRACT_ACCOUNT.code, AccountCode.NOT_CONTRACT_ACCOUNT.message)
 
         val result: Result<TokenInfoResp?> = tokeService.getInfoByContractAddress(contractAddress)
+
+        return Result.success(result.data)
+    }
+
+    @GetMapping("/transfers")
+    @Operation(summary = "Get transfer list", description = "Retrieve transfer list based on the provided conditions")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "404", description = "Resource Not Found", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    fun getTransferList(@Parameter(description = "tokenAddress", required = true,) @RequestParam(required = true) @NotNull tokenAddress: String,
+                @Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(1) pageNumber: Int,
+                @Parameter(description = "pageSize", required = true) @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<TokenTransferListResp?> {
+
+        LOG.info(Log.format("success", Log.kv("api", "token/transfers")))
+
+        val result: Result<TokenTransferListResp?> = tokeService.getTransferListByPage(tokenAddress, pageNumber, pageSize)
 
         return Result.success(result.data)
     }

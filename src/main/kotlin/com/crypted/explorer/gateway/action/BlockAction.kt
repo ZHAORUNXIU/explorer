@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
+import java.math.BigInteger
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
 
@@ -55,7 +56,7 @@ class BlockAction(private val blockService: BlockService)  {
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
-    fun getInfoByBlockNumber(@Parameter(description = "blockNumber", required = true) @PathVariable("blockNumber") @NotNull @Min(0) blockNumber: Int): Result<BlockInfoResp?> {
+    fun getInfoByBlockNumber(@Parameter(description = "blockNumber", required = true) @PathVariable("blockNumber") @NotNull @Min(0) blockNumber: BigInteger): Result<BlockInfoResp?> {
 
         LOG.info(Log.format("success", Log.kv("api", "block/")))
 

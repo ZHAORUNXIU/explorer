@@ -33,7 +33,7 @@ class AccountServiceImpl(
 
     private val RANKING_BY_BALANCE = "balance"
 
-    @Value("\${account.symbol}")
+    @Value("\${account.balance.symbol}")
     private lateinit var symbol: String
 
     override fun getRankingByPage(pageNumber: Int, pageSize: Int): Result<AccountRankingResp?> {
@@ -73,15 +73,16 @@ class AccountServiceImpl(
 
     override fun getInfoByAddress(address: String): Result<AccountInfoResp?> {
 
-        val accountDO: AccountDO? = accountRepository.findByAddress(address)
+        val accountDO: AccountDO = accountRepository.findByAddress(address)
 
         val tokenHoldings: List<TokenVO>? = tokenService.getTokenHoldingsByHolder(address).data
 
         val accountInfoResp = AccountInfoResp().apply {
-            this.address = accountDO?.address
-            this.balance = accountDO?.balance
+            this.address = accountDO.address
+            this.balance = accountDO.balance
             this.symbol = this@AccountServiceImpl.symbol
             this.tokenCount = tokenHoldings?.size
+            this.isContract = accountDO.isContract == 1
             this.tokenHoldings = tokenHoldings
         }
 
@@ -89,7 +90,7 @@ class AccountServiceImpl(
     }
 
     override fun checkAccountIsContract(address: String): Result<Boolean> {
-        return Result.success(accountRepository.findByAddress(address)?.isContract == 1)
+        return Result.success(accountRepository.findByAddress(address).isContract == 1)
     }
 
 }

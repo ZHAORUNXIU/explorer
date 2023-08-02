@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 @Repository
 interface BlockMongoRepository : MongoRepository<BlockMongoDO, String> {
 
-    fun findByNumber(number: Int): BlockMongoDO
+    fun findByNumber(number: Long): BlockMongoDO
 
     fun findTopByOrderByNumberDesc(): BlockMongoDO
 

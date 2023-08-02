@@ -19,7 +19,7 @@ class TransactionMongoDO : Serializable {
     var __v = 0
     var createdAt: Date? = null
     var blockHash: String? = null
-    var blockNumber = 0
+    var blockNumber: Long = 0L
     var burntFee: String? = null
     var contractAddress: String? = null
     var effectiveGasPrice: String? = null

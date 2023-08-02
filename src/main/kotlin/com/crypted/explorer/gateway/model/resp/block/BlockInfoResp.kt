@@ -5,7 +5,7 @@ import java.io.Serializable
 
 class BlockInfoResp : Serializable {
     @Schema(description = "blockNumber", type = "integer")
-    var blockNumber: Int? = 0
+    var blockNumber: Long? = 0L
     @Schema(description = "timestamp", type = "string", format = "second")
     var timestamp: String? = null
     @Schema(description = "txCount", type = "integer")
@@ -15,5 +15,5 @@ class BlockInfoResp : Serializable {
     @Schema(description = "symbol", type = "string")
     var symbol: String? = null
     @Schema(description = "latestBlock", type = "integer")
-    var latestBlock: Int? = 0
+    var latestBlock: Long? = 0L
 }

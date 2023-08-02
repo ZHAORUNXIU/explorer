@@ -17,11 +17,11 @@ interface TransactionMongoRepository : MongoRepository<TransactionMongoDO, Strin
 
     fun findByToAndStatus(to: String, status: Int, pageable: Pageable): Page<TransactionMongoDO>
 
-    fun findByBlockNumber(blockNumber: Int, pageable: Pageable): Page<TransactionMongoDO>
+    fun findByBlockNumber(blockNumber: Long, pageable: Pageable): Page<TransactionMongoDO>
 
-    fun findByBlockNumberAndStatus(blockNumber: Int, status: Int, pageable: Pageable): Page<TransactionMongoDO>
+    fun findByBlockNumberAndStatus(blockNumber: Long, status: Int, pageable: Pageable): Page<TransactionMongoDO>
 
-    fun findByHash(hash: String): TransactionMongoDO?
+    fun findByHash(hash: String): TransactionMongoDO
 
     fun countByFromOrToAndStatus(from: String, to: String, status: Int): Int
 
@@ -31,9 +31,9 @@ interface TransactionMongoRepository : MongoRepository<TransactionMongoDO, Strin
 
     fun countByToAndStatus(to: String, status: Int): Int
 
-    fun countByBlockNumberAndStatus(blockNumber: Int, status: Int): Int
+    fun countByBlockNumberAndStatus(blockNumber: Long, status: Int): Int
 
-    fun countByBlockNumber(blockNumber: Int): Int
+    fun countByBlockNumber(blockNumber: Long): Int
 
     fun countByStatus(status: Int): Int
 

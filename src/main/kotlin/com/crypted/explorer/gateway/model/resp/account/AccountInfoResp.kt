@@ -13,6 +13,8 @@ class AccountInfoResp : Serializable {
     var symbol: String? = null
     @Schema(description = "tokenCount", type = "integer")
     var tokenCount: Int? = 0
+    @Schema(description = "isContract", type = "boolean", example = "true")
+    var isContract: Boolean? = null
     @Schema(description = "tokenHoldings", type = "array")
     var tokenHoldings: List<TokenVO>? = null
 }

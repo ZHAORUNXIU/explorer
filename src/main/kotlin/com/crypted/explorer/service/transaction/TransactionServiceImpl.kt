@@ -2,15 +2,19 @@ package com.crypted.explorer.service.transaction
 
 import com.crypted.explorer.api.model.domain.transaction.InflationMongoDO
 import com.crypted.explorer.api.model.domain.transaction.TransactionMongoDO
+import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.api.service.transaction.TransactionService
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.repository.MongoUtils
 import com.crypted.explorer.common.util.MathUtils
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionInfoResp
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionListResp
+import com.crypted.explorer.gateway.model.resp.transaction.TransactionTokenInfoResp
+import com.crypted.explorer.gateway.model.vo.token.TokenTransferVO
 import com.crypted.explorer.gateway.model.vo.transaction.TransactionHistoryVO
 import com.crypted.explorer.gateway.model.vo.transaction.TransactionListVO
 import org.slf4j.LoggerFactory
+import org.springframework.beans.BeanUtils
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -22,7 +26,8 @@ import org.springframework.stereotype.Service
 class TransactionServiceImpl(
     private val mongoUtils: MongoUtils,
     private val transactionMongoRepository: TransactionMongoRepository,
-    private val inflationMongoRepository: InflationMongoRepository
+    private val inflationMongoRepository: InflationMongoRepository,
+    private val tokenService: TokenService
 ) : TransactionService {
 
     companion object {
@@ -41,7 +46,7 @@ class TransactionServiceImpl(
 
     private val SORT_BY_CREATED_AT = "createdAt"
 
-    @Value("\${transaction.symbol}")
+    @Value("\${transaction.value.symbol}")
     private lateinit var symbol: String
 
     @Value("\${transaction.history.size}")
@@ -50,7 +55,7 @@ class TransactionServiceImpl(
     override fun getListByPage(
         fromAddress: String?,
         toAddress: String?,
-        blockNumber: Int?,
+        blockNumber: Long?,
         status: Int?,
         pageNumber: Int,
         pageSize: Int
@@ -88,26 +93,36 @@ class TransactionServiceImpl(
 
     override fun getInfoByTxHash(txHash: String): Result<TransactionInfoResp?> {
 
-        val transactionMongoDO: TransactionMongoDO? = transactionMongoRepository.findByHash(txHash)
+        val transactionMongoDO: TransactionMongoDO = transactionMongoRepository.findByHash(txHash)
 
         val transactionInfoResp = TransactionInfoResp().apply {
-            this.txHash = transactionMongoDO?.hash
-            this.blockNumber = transactionMongoDO?.blockNumber
-            this.timestamp = transactionMongoDO?.createdAt?.time?.div(1000)
-            this.from = transactionMongoDO?.from
-            this.to = transactionMongoDO?.to
-            this.value = transactionMongoDO?.value
-            this.txFee = transactionMongoDO?.fee
+            this.txHash = transactionMongoDO.hash
+            this.blockNumber = transactionMongoDO.blockNumber
+            this.timestamp = transactionMongoDO.createdAt?.time?.div(1000)
+            this.from = transactionMongoDO.from
+            this.to = transactionMongoDO.to
+            this.value = transactionMongoDO.value
+            this.txFee = transactionMongoDO.fee
             this.symbol = this@TransactionServiceImpl.symbol
-            this.status = transactionMongoDO?.status
+            this.status = transactionMongoDO.status
         }
 
         return Result.success(transactionInfoResp)
 
     }
 
+    override fun getTokenInfoByTxHash(txHash: String): Result<TransactionTokenInfoResp?> {
 
-    override fun getTransactionAmountByBlockNumber(blockNumber: Int): Result<Int> {
+        val tokenTransferVO: TokenTransferVO? = tokenService.getTokenInfoByTxHash(txHash).data
+
+        val transactionTokenInfoResp = TransactionTokenInfoResp()
+        tokenTransferVO?.let { BeanUtils.copyProperties(it, transactionTokenInfoResp) }
+
+        return Result.success(transactionTokenInfoResp)
+
+    }
+
+    override fun getTransactionAmountByBlockNumber(blockNumber: Long): Result<Int> {
 
         return Result.success(transactionMongoRepository.countByBlockNumber(blockNumber))
     }
@@ -132,7 +147,7 @@ class TransactionServiceImpl(
     private fun findByFromOrToOrBlockNumberAndStatus(
         fromAddress: String?,
         toAddress: String?,
-        blockNumber: Int?,
+        blockNumber: Long?,
         status: Int?,
         pageable: Pageable
     ): List<TransactionMongoDO> {
@@ -147,7 +162,7 @@ class TransactionServiceImpl(
             orCriteriaList.add(Criteria.where(FIELD_NAME_TO).`is`(toAddress))
         }
 
-        if (blockNumber != null && blockNumber != 0) {
+        if (blockNumber != null && blockNumber != 0L) {
             orCriteriaList.add(Criteria.where(FIELD_NAME_BLOCKNUMBER).`is`(blockNumber))
         }
 
@@ -161,7 +176,7 @@ class TransactionServiceImpl(
     private fun countByFromOrToOrBlockNumberAndStatus(
         fromAddress: String?,
         toAddress: String?,
-        blockNumber: Int?,
+        blockNumber: Long?,
         status: Int?
     ): Int {
         val andCriteriaList = mutableListOf<Criteria>()
@@ -175,7 +190,7 @@ class TransactionServiceImpl(
             orCriteriaList.add(Criteria.where(FIELD_NAME_TO).`is`(toAddress))
         }
 
-        if (blockNumber != null && blockNumber != 0) {
+        if (blockNumber != null && blockNumber != 0L) {
             orCriteriaList.add(Criteria.where(FIELD_NAME_BLOCKNUMBER).`is`(blockNumber))
         }
 
