@@ -44,7 +44,9 @@ class TransactionServiceImpl(
 
     private val FIELD_NAME_STATUS = "status"
 
-    private val SORT_BY_CREATED_AT = "createdAt"
+    private val FIELD_NAME_TRANSACTIONINDEX = "transactionIndex"
+
+    private val FIELD_NAME_CREATED_AT = "createdAt"
 
     @Value("\${transaction.value.symbol}")
     private lateinit var symbol: String
@@ -61,7 +63,10 @@ class TransactionServiceImpl(
         pageSize: Int
     ): Result<TransactionListResp?> {
 
-        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_CREATED_AT)
+        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by(
+            Sort.Order(Sort.Direction.DESC, FIELD_NAME_BLOCKNUMBER),
+            Sort.Order(Sort.Direction.ASC, FIELD_NAME_TRANSACTIONINDEX)
+        ))
 
         val transactionMongoDOList: List<TransactionMongoDO?> =
             this.findByFromOrToOrBlockNumberAndStatus(fromAddress, toAddress, blockNumber, status, pageable)
@@ -73,7 +78,7 @@ class TransactionServiceImpl(
             transactionListVO.txHash = transactionMongoDO!!.hash
             transactionListVO.method = transactionMongoDO.functionName ?: transactionMongoDO.functionSignature
             transactionListVO.blockNumber = transactionMongoDO.blockNumber
-            transactionListVO.timestamp = transactionMongoDO.createdAt?.time?.div(1000)
+            transactionListVO.blockTimestamp = transactionMongoDO.blockTimestamp
             transactionListVO.from = transactionMongoDO.from
             transactionListVO.to = transactionMongoDO.to
             transactionListVO.value = transactionMongoDO.value
@@ -129,7 +134,7 @@ class TransactionServiceImpl(
 
     override fun getHistory(): Result<List<TransactionHistoryVO>?> {
 
-        val pageable: Pageable = PageRequest.of(0, historySize.toInt(), Sort.Direction.DESC, SORT_BY_CREATED_AT)
+        val pageable: Pageable = PageRequest.of(0, historySize.toInt(), Sort.Direction.DESC, FIELD_NAME_CREATED_AT)
 
         val inflationMongoDOList: List<InflationMongoDO?> = inflationMongoRepository.findAll(pageable).content
 

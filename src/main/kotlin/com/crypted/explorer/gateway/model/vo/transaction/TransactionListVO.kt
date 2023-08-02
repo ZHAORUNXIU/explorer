@@ -10,8 +10,8 @@ class TransactionListVO : Serializable {
     var method: String? = null
     @Schema(description = "blockNumber", type = "integer")
     var blockNumber: Long? = 0L
-    @Schema(description = "timestamp", type = "integer", format = "second")
-    var timestamp: Long? = 0
+    @Schema(description = "blockTimestamp", type = "integer", format = "second")
+    var blockTimestamp: Long? = 0
     @Schema(description = "from", type = "string")
     var from: String? = null
     @Schema(description = "to", type = "string")
@@ -24,4 +24,5 @@ class TransactionListVO : Serializable {
     var symbol: String? = null
     @Schema(description = "status 0-failure 1-success null-pending", type = "Int")
     var status: Int? = null
+
 }

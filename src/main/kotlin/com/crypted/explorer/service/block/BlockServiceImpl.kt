@@ -36,7 +36,7 @@ class BlockServiceImpl(
         private val LOG = LoggerFactory.getLogger(BlockServiceImpl::class.java)
     }
 
-    private val SORT_BY_BLOCK_NUMBER = "number"
+    private val FIELD_NAME_BLOCK_NUMBER = "number"
 
     private val COLLECTION_NAME_BLOCKS = "blocks"
 
@@ -45,8 +45,8 @@ class BlockServiceImpl(
 
     override fun getListByPage(pageNumber: Int, pageSize: Int): Result<BlockListResp?> {
 
-//        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_BLOCK_NUMBER)
-        val paging: Paging = Paging(pageNumber, pageSize, Sort.Direction.DESC, SORT_BY_BLOCK_NUMBER, blockMongoRepository.findTopByOrderByNumberDesc().number)
+//        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, FIELD_NAME_BLOCK_NUMBER)
+        val paging: Paging = Paging(pageNumber, pageSize, Sort.Direction.DESC, FIELD_NAME_BLOCK_NUMBER, blockMongoRepository.findTopByOrderByNumberDesc().number)
 
 //        val blockMongoDOList: List<BlockMongoDO> = mongoUtils.getByPage(pageable, BlockMongoDO::class)
         val blockMongoDOList: List<BlockMongoDO> = mongoUtils.getByPageV2(paging, BlockMongoDO::class)

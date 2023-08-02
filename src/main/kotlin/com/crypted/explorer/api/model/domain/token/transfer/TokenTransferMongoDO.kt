@@ -18,4 +18,5 @@ abstract class TokenTransferMongoDO : Serializable {
     var tokenAddress: String? = null
     var createdAt: Date? = null
     var updatedAt: Date? = null
+    var blockTimestamp: Long? = 0
 }
