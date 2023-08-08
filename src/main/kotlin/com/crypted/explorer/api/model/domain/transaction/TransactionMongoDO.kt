@@ -40,6 +40,7 @@ class TransactionMongoDO : Serializable {
     var value: String? = null
     var functionName: String? = null
     var status: Int? = null
+    var blockTimestamp: Long? = 0
 
     companion object {
         private const val serialVersionUID = 4429641190773945715L

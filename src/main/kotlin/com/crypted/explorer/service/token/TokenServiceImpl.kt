@@ -8,6 +8,7 @@ import com.crypted.explorer.api.model.domain.token.transfer.TokenTransferMongoDO
 import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.constant.AccountCode
 import com.crypted.explorer.common.constant.TokenCode
+import com.crypted.explorer.common.constant.TokenVisibility
 import com.crypted.explorer.common.constant.TokenType
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.repository.MongoUtils
@@ -21,7 +22,6 @@ import com.crypted.explorer.gateway.model.vo.token.TokenListVO
 import com.crypted.explorer.gateway.model.vo.token.TokenTransferListVO
 import com.crypted.explorer.gateway.model.vo.token.TokenTransferVO
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -47,11 +47,15 @@ class TokenServiceImpl(
         private val LOG = LoggerFactory.getLogger(TokenServiceImpl::class.java)
     }
 
-    private val SORT_BY_ID = "id"
+    private val FIELD_NAME_ID = "id"
 
-    private val SORT_BY_CREATED_AT = "createdAt"
+    private val FIELD_NAME_CREATED_AT = "createdAt"
 
     private val FIELD_NAME_TOKEN_ADDRESS = "tokenAddress"
+
+    private val FIELD_NAME_BLOCKNUMBER = "blockNumber"
+
+    private val FIELD_NAME_LOGINDEX = "logIndex"
 
     private val COLLECTION_NAME_ERC20_TRANSFERS = "erc20_transfers"
 
@@ -80,7 +84,7 @@ class TokenServiceImpl(
             // erc20
             erc20HoldDOList?.stream()?.map { erc20HoldDO ->
                 val tokenDO: TokenDO? = erc20HoldDO.tokenAddress?.let { tokenRepository.findByAddress(it) }
-                if (tokenDO != null) {
+                if (tokenDO != null && checkVisibility(tokenDO)) {
                     val tokenVO = TokenVO()
                     tokenVO.name = tokenDO.let { this.getTokenName(it) }
                     tokenVO.tokenSymbol = tokenDO.symbol
@@ -110,10 +114,10 @@ class TokenServiceImpl(
 
     override fun getListByPage(pageNumber: Int, pageSize: Int): Result<TokenListResp?> {
 
-        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_ID)
+        val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, FIELD_NAME_ID)
         val tokenDOList: List<TokenDO?> = tokenRepository.findAll(pageable).content
 
-        val tokenList: List<TokenListVO?> = tokenDOList.stream().map { tokenDO ->
+        val tokenList: List<TokenListVO?> = tokenDOList.stream().filter { it?.let { checkVisibility(it) } == true }.map { tokenDO ->
             val tokenListVO = TokenListVO()
             tokenListVO.address = tokenDO!!.address
             tokenListVO.symbol = tokenDO.symbol
@@ -122,7 +126,7 @@ class TokenServiceImpl(
             tokenListVO
         }.toList()
 
-        val totalToken: Int = tokenRepository.count().toInt()
+        val totalToken: Int = tokenRepository.countByIsExposedIn(listOf(TokenVisibility.ALL_VISIBLE.value, TokenVisibility.EXPLORER_VISIBLE_ONLY.value))
 
         val tokenListResp = TokenListResp().apply {
             this.totalPage = MathUtils.ceilDiv(totalToken, pageSize)
@@ -160,7 +164,10 @@ class TokenServiceImpl(
 
         val tokenDO: TokenDO? = tokenRepository.findByAddress(tokenAddress)
         tokenDO?.let {
-            val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, SORT_BY_CREATED_AT)
+            val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by(
+                Sort.Order(Sort.Direction.DESC, FIELD_NAME_BLOCKNUMBER),
+                Sort.Order(Sort.Direction.ASC, FIELD_NAME_LOGINDEX)
+            ))
 
             val tokenTransferMongoDOList: List<TokenTransferMongoDO> = when (tokenDO.type?.let { Text.cleanAndLowercase(it) }) {
                 TokenType.ERC20.value -> this.findByTokenAddress(tokenAddress, pageable, Erc20TransferMongoDO::class)
@@ -180,7 +187,7 @@ class TokenServiceImpl(
                 tokenTransferListVO.txHash = tokenTransferMongoDO.transactionHash
                 tokenTransferListVO.method = tokenTransferMongoDO.functionName
                 tokenTransferListVO.blockNumber = tokenTransferMongoDO.blockNumber
-                tokenTransferListVO.timestamp = tokenTransferMongoDO.createdAt?.time?.div(1000)
+                tokenTransferListVO.blockTimestamp = tokenTransferMongoDO.blockTimestamp
                 tokenTransferListVO.from = tokenTransferMongoDO.from
                 tokenTransferListVO.to = tokenTransferMongoDO.to
                 tokenTransferListVO.value = tokenTransferMongoDO.value
@@ -248,5 +255,10 @@ class TokenServiceImpl(
         val criteriaList = mutableListOf<Criteria>()
         criteriaList.add(Criteria.where(FIELD_NAME_TOKEN_ADDRESS).`is`(tokenAddress))
         return mongoUtils.getCountWithNativeQuery(collectionName, criteriaList)
+    }
+
+    private fun checkVisibility(tokenDO: TokenDO): Boolean {
+        return tokenDO.isExposed.equals(TokenVisibility.ALL_VISIBLE.value, ignoreCase = true)
+                || tokenDO.isExposed.equals(TokenVisibility.EXPLORER_VISIBLE_ONLY.value, ignoreCase = true)
     }
 }
