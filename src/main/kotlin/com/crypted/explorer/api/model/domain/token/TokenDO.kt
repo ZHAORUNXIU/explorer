@@ -43,6 +43,9 @@ class TokenDO : Serializable {
     @Column(name = "type")
     var type: String? = null
 
+    @Column(name = "is_exposed")
+    var isExposed: String? = null
+
     @Column(name = "deployed_contract_id")
     var deployedContractId: Long? = 0
 

@@ -14,4 +14,5 @@ interface TokenRepository : JpaRepository<TokenDO, Long> {
 
     fun findByAddress(address: String): TokenDO?
 
+    fun countByIsExposedIn(visibilities: List<String>): Int
 }
