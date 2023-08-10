@@ -2,6 +2,7 @@ package com.crypted.explorer.service.transaction
 
 import com.crypted.explorer.api.model.domain.transaction.InflationMongoDO
 import com.crypted.explorer.api.model.domain.transaction.TransactionMongoDO
+import com.crypted.explorer.api.service.account.AccountService
 import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.api.service.transaction.TransactionService
 import com.crypted.explorer.common.model.Result
@@ -13,6 +14,7 @@ import com.crypted.explorer.gateway.model.resp.transaction.TransactionTokenInfoR
 import com.crypted.explorer.gateway.model.vo.token.TokenTransferVO
 import com.crypted.explorer.gateway.model.vo.transaction.TransactionHistoryVO
 import com.crypted.explorer.gateway.model.vo.transaction.TransactionListVO
+import com.crypted.explorer.service.account.AccountRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanUtils
 import org.springframework.beans.factory.annotation.Value
@@ -27,7 +29,8 @@ class TransactionServiceImpl(
     private val mongoUtils: MongoUtils,
     private val transactionMongoRepository: TransactionMongoRepository,
     private val inflationMongoRepository: InflationMongoRepository,
-    private val tokenService: TokenService
+    private val tokenService: TokenService,
+    private val accountRepository: AccountRepository,
 ) : TransactionService {
 
     companion object {
@@ -72,6 +75,7 @@ class TransactionServiceImpl(
             this.findByFromOrToOrBlockNumberAndStatus(fromAddress, toAddress, blockNumber, status, pageable)
         val totalTx: Int = this.countByFromOrToOrBlockNumberAndStatus(fromAddress, toAddress, blockNumber, status)
 
+        val addressIsContractMap = getAccountIsContractMap(transactionMongoDOList)
         val transactionList: List<TransactionListVO?> = transactionMongoDOList.stream().map { transactionMongoDO ->
             val transactionListVO = TransactionListVO()
             transactionListVO.status = transactionMongoDO?.status
@@ -80,7 +84,9 @@ class TransactionServiceImpl(
             transactionListVO.blockNumber = transactionMongoDO.blockNumber
             transactionListVO.blockTimestamp = transactionMongoDO.blockTimestamp
             transactionListVO.from = transactionMongoDO.from
+            transactionListVO.fromIsContract = addressIsContractMap.get(transactionMongoDO.from)
             transactionListVO.to = transactionMongoDO.to
+            transactionListVO.toIsContract = addressIsContractMap.get(transactionMongoDO.to)
             transactionListVO.value = transactionMongoDO.value
             transactionListVO.txFee = transactionMongoDO.fee
             transactionListVO.symbol = this@TransactionServiceImpl.symbol
@@ -206,4 +212,12 @@ class TransactionServiceImpl(
         return mongoUtils.getCountWithNativeQuery(COLLECTION_NAME_TRANSACTIONS, andCriteriaList, orCriteriaList)
     }
 
+    private fun getAccountIsContractMap(transactionMongoDOList: List<TransactionMongoDO?>): Map<String, Boolean> {
+        val addressList = transactionMongoDOList.flatMap { listOf(it?.from, it?.to) }
+            .filterNotNull()
+            .distinct()
+        val addressDOList = accountRepository.findByAddressIn(addressList)
+
+        return addressDOList.associate { it.address!! to (it.isContract == 1) }
+    }
 }

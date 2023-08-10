@@ -5,6 +5,7 @@ import com.crypted.explorer.api.model.domain.token.transfer.Erc1155TransferMongo
 import com.crypted.explorer.api.model.domain.token.transfer.Erc20TransferMongoDO
 import com.crypted.explorer.api.model.domain.token.transfer.Erc721TransferMongoDO
 import com.crypted.explorer.api.model.domain.token.transfer.TokenTransferMongoDO
+import com.crypted.explorer.api.model.domain.transaction.TransactionMongoDO
 import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.constant.AccountCode
 import com.crypted.explorer.common.constant.TokenCode
@@ -21,6 +22,7 @@ import com.crypted.explorer.gateway.model.vo.token.TokenVO
 import com.crypted.explorer.gateway.model.vo.token.TokenListVO
 import com.crypted.explorer.gateway.model.vo.token.TokenTransferListVO
 import com.crypted.explorer.gateway.model.vo.token.TokenTransferVO
+import com.crypted.explorer.service.account.AccountRepository
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -40,8 +42,9 @@ class TokenServiceImpl(
     private val erc1155HoldRepository: Erc1155HoldRepository,
     private val erc20TransferMongoRepository: Erc20TransferMongoRepository,
     private val erc721TransferMongoRepository: Erc721TransferMongoRepository,
-    private val erc1155TransferMongoRepository: Erc1155TransferMongoRepository
-) : TokenService {
+    private val erc1155TransferMongoRepository: Erc1155TransferMongoRepository,
+    private val accountRepository: AccountRepository,
+    ) : TokenService {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(TokenServiceImpl::class.java)
@@ -182,6 +185,7 @@ class TokenServiceImpl(
                 else -> 0
             }
 
+            val addressIsContractMap = getAccountIsContractMap(tokenTransferMongoDOList)
             val tokenTransferList: List<TokenTransferListVO?> = tokenTransferMongoDOList.stream().map { tokenTransferMongoDO ->
                 val tokenTransferListVO = TokenTransferListVO()
                 tokenTransferListVO.txHash = tokenTransferMongoDO.transactionHash
@@ -189,7 +193,9 @@ class TokenServiceImpl(
                 tokenTransferListVO.blockNumber = tokenTransferMongoDO.blockNumber
                 tokenTransferListVO.blockTimestamp = tokenTransferMongoDO.blockTimestamp
                 tokenTransferListVO.from = tokenTransferMongoDO.from
+                tokenTransferListVO.fromIsContract = addressIsContractMap.get(tokenTransferMongoDO.from)
                 tokenTransferListVO.to = tokenTransferMongoDO.to
+                tokenTransferListVO.toIsContract = addressIsContractMap.get(tokenTransferMongoDO.to)
                 tokenTransferListVO.value = tokenTransferMongoDO.value
                 tokenTransferListVO.symbol = tokenDO.symbol
                 tokenTransferListVO
@@ -260,5 +266,14 @@ class TokenServiceImpl(
     private fun checkVisibility(tokenDO: TokenDO): Boolean {
         return tokenDO.isExposed.equals(TokenVisibility.ALL_VISIBLE.value, ignoreCase = true)
                 || tokenDO.isExposed.equals(TokenVisibility.EXPLORER_VISIBLE_ONLY.value, ignoreCase = true)
+    }
+
+    private fun getAccountIsContractMap(tokenTransferMongoDOList: List<TokenTransferMongoDO>): Map<String, Boolean> {
+        val addressList = tokenTransferMongoDOList.flatMap { listOf(it.from, it.to) }
+            .filterNotNull()
+            .distinct()
+        val addressDOList = accountRepository.findByAddressIn(addressList)
+
+        return addressDOList.associate { it.address!! to (it.isContract == 1) }
     }
 }

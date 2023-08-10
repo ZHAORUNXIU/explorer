@@ -93,4 +93,10 @@ class AccountServiceImpl(
         return Result.success(accountRepository.findByAddress(address).isContract == 1)
     }
 
+//    override fun getAccountIsContractMap(addressList: List<String>): Result<Map<String, Boolean>> {
+//
+//        val addressDOList = accountRepository.findByAddressIn(addressList)
+//        return Result.success(addressDOList.associate { it.address!! to (it.isContract == 1) })
+//    }
+
 }
