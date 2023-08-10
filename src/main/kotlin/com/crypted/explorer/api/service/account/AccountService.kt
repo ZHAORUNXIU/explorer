@@ -11,4 +11,6 @@ interface AccountService {
 
     fun checkAccountIsContract(address: String): Result<Boolean>
 
+//    fun getAccountIsContractMap(addressList: List<String>): Result<Map<String, Boolean>>
+
 }

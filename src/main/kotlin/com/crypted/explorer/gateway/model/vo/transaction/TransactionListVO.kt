@@ -14,8 +14,12 @@ class TransactionListVO : Serializable {
     var blockTimestamp: Long? = 0
     @Schema(description = "from", type = "string")
     var from: String? = null
+    @Schema(description = "fromIsContract", type = "boolean", example = "true")
+    var fromIsContract: Boolean? = null
     @Schema(description = "to", type = "string")
     var to: String? = null
+    @Schema(description = "toIsContract", type = "boolean", example = "true")
+    var toIsContract: Boolean? = null
     @Schema(description = "value", type = "string")
     var value: String? = null
     @Schema(description = "txFee", type = "string")

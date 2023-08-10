@@ -17,6 +17,8 @@ interface AccountRepository : JpaRepository<AccountDO, Long> {
 
     fun findByAddress(address: String): AccountDO
 
+    fun findByAddressIn(addressList: List<String>): List<AccountDO>
+
     @Query("SELECT a FROM AccountDO a ORDER BY CONVERT(a.balance, DECIMAL(65, 2)) DESC")
     fun findAllOrderByBalance(pageable: Pageable): Page<AccountDO>
 
