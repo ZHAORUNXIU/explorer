@@ -34,7 +34,6 @@ class TransactionServiceImpl(
     private val tokenService: TokenService,
     private val accountRepository: AccountRepository,
     private val checkpointMongoRepository: CheckpointMongoRepository,
-    private val tokenService: TokenService
 ) : TransactionService {
 
     companion object {
