@@ -103,7 +103,7 @@ class TransactionServiceImpl(
         val transactionInfoResp = TransactionInfoResp().apply {
             this.txHash = transactionMongoDO.hash
             this.blockNumber = transactionMongoDO.blockNumber
-            this.timestamp = transactionMongoDO.createdAt?.time?.div(1000)
+            this.blockTimestamp = transactionMongoDO.blockTimestamp
             this.from = transactionMongoDO.from
             this.to = transactionMongoDO.to
             this.value = transactionMongoDO.value
