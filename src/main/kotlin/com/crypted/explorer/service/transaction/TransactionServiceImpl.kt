@@ -1,5 +1,6 @@
 package com.crypted.explorer.service.transaction
 
+import com.crypted.explorer.api.model.domain.transaction.CheckpointMongoDO
 import com.crypted.explorer.api.model.domain.transaction.InflationMongoDO
 import com.crypted.explorer.api.model.domain.transaction.TransactionMongoDO
 import com.crypted.explorer.api.service.account.AccountService
@@ -15,6 +16,7 @@ import com.crypted.explorer.gateway.model.vo.token.TokenTransferVO
 import com.crypted.explorer.gateway.model.vo.transaction.TransactionHistoryVO
 import com.crypted.explorer.gateway.model.vo.transaction.TransactionListVO
 import com.crypted.explorer.service.account.AccountRepository
+import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanUtils
 import org.springframework.beans.factory.annotation.Value
@@ -31,6 +33,8 @@ class TransactionServiceImpl(
     private val inflationMongoRepository: InflationMongoRepository,
     private val tokenService: TokenService,
     private val accountRepository: AccountRepository,
+    private val checkpointMongoRepository: CheckpointMongoRepository,
+    private val tokenService: TokenService
 ) : TransactionService {
 
     companion object {
@@ -109,7 +113,7 @@ class TransactionServiceImpl(
         val transactionInfoResp = TransactionInfoResp().apply {
             this.txHash = transactionMongoDO.hash
             this.blockNumber = transactionMongoDO.blockNumber
-            this.timestamp = transactionMongoDO.createdAt?.time?.div(1000)
+            this.blockTimestamp = transactionMongoDO.blockTimestamp
             this.from = transactionMongoDO.from
             this.to = transactionMongoDO.to
             this.value = transactionMongoDO.value
@@ -142,11 +146,14 @@ class TransactionServiceImpl(
 
         val pageable: Pageable = PageRequest.of(0, historySize.toInt(), Sort.Direction.DESC, FIELD_NAME_CREATED_AT)
 
-        val inflationMongoDOList: List<InflationMongoDO?> = inflationMongoRepository.findAll(pageable).content
+        val checkpointMongoDOList: List<CheckpointMongoDO> = checkpointMongoRepository.findAll(pageable).content
 
-        val transactionList: List<TransactionHistoryVO> = inflationMongoDOList.stream().map { inflationMongoDO ->
+        val inflationMongoDOList: List<InflationMongoDO> = inflationMongoRepository.findByCheckpointIn(checkpointMongoDOList.map { it.id!! })
+
+        val transactionList: List<TransactionHistoryVO> = checkpointMongoDOList.map { checkpointMongoDO ->
+            val inflationMongoDO = inflationMongoDOList.find {it.checkpoint == checkpointMongoDO.id }
             val transactionHistoryVO = TransactionHistoryVO().apply {
-                this.date = inflationMongoDO?.createdAt?.let { MathUtils.convertTimeZone(it) }
+                this.date = checkpointMongoDO.createdAt?.let { MathUtils.convertTimeZone(it) }
                 this.count = inflationMongoDO?.transactionCount
             }
             transactionHistoryVO

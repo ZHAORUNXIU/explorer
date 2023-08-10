@@ -8,8 +8,8 @@ class TransactionInfoResp : Serializable {
     var txHash: String? = null
     @Schema(description = "blockNumber", type = "integer")
     var blockNumber: Long? = 0L
-    @Schema(description = "timestamp", type = "integer", format = "second")
-    var timestamp: Long? = 0
+    @Schema(description = "blockTimestamp", type = "integer", format = "second")
+    var blockTimestamp: Long? = 0
     @Schema(description = "from", type = "string")
     var from: String? = null
     @Schema(description = "to", type = "string")
