@@ -1,11 +1,10 @@
-package com.crypted.explorer.gateway.model.vo.token
+package com.crypted.explorer.api.model.vo.token
 
+import com.crypted.explorer.api.model.vo.account.AccountVO
 import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable
 
-class TokenListVO : Serializable {
-    @Schema(description = "address", type = "string")
-    var address: String? = null
+class TokenListVO: AccountVO(), Serializable {
     @Schema(description = "symbol", type = "string")
     var symbol: String? = null
     @Schema(description = "name", type = "string")

@@ -1,4 +1,4 @@
-package com.crypted.explorer.api.model.domain.token.transfer
+package com.crypted.explorer.api.model.domain.transaction.transfer
 
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
@@ -12,6 +12,7 @@ abstract class TokenTransferMongoDO : Serializable {
     var transactionHash: String? = null
     var logIndex = 0
     var functionName: String? = null
+    var functionSignature: String? = null
     var from: String? = null
     var to: String? = null
     var value: String? = null

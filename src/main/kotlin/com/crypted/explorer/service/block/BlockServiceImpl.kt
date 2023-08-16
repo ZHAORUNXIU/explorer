@@ -2,6 +2,7 @@ package com.crypted.explorer.service.block
 
 import com.crypted.explorer.api.model.domain.block.BlockMongoDO
 import com.crypted.explorer.api.model.domain.block.InflationRatioDO
+import com.crypted.explorer.api.model.vo.block.BlockInfoVO
 import com.crypted.explorer.api.service.block.BlockService
 import com.crypted.explorer.api.service.transaction.TransactionService
 import com.crypted.explorer.common.model.Result
@@ -10,7 +11,7 @@ import com.crypted.explorer.common.repository.Paging
 import com.crypted.explorer.common.util.MathUtils
 import com.crypted.explorer.gateway.model.resp.block.BlockInfoResp
 import com.crypted.explorer.gateway.model.resp.block.BlockListResp
-import com.crypted.explorer.gateway.model.vo.block.BlockListVO
+import com.crypted.explorer.api.model.vo.block.BlockListVO
 import com.crypted.explorer.service.account.AccountServiceImpl
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -29,7 +30,6 @@ class BlockServiceImpl(
     private val mongoUtils: MongoUtils,
     private val blockMongoRepository: BlockMongoRepository,
     private val inflationRatioMongoRepository: InflationRatioMongoRepository,
-    private val transactionService: TransactionService
 ) : BlockService {
 
     companion object {
@@ -78,20 +78,19 @@ class BlockServiceImpl(
         return Result.success(blockListResp)
     }
 
-    override fun getInfoByBlockNumber(blockNumber: BigInteger): Result<BlockInfoResp?> {
+    override fun getInfoByBlockNumber(blockNumber: BigInteger): Result<BlockInfoVO?> {
 
         val blockMongoDO: BlockMongoDO = blockMongoRepository.findByNumber(blockNumber.toLong())
 
-        val blockInfoResp = BlockInfoResp().apply {
+        val blockInfoVO = BlockInfoVO().apply {
             this.blockNumber = blockMongoDO.number
             this.timestamp = blockMongoDO.timestamp.toString()
-            this.txCount = transactionService.getTransactionAmountByBlockNumber(blockMongoDO.number).data
             this.blockReward = blockMongoDO.blockReward
             this.symbol = this@BlockServiceImpl.symbol
             this.latestBlock = blockMongoRepository.findTopByOrderByNumberDesc().number
         }
 
-        return Result.success(blockInfoResp)
+        return Result.success(blockInfoVO)
     }
 
     override fun getTotalBlockReward(): Result<String> {

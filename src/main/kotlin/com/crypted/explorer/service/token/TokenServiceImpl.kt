@@ -1,35 +1,25 @@
 package com.crypted.explorer.service.token
 
 import com.crypted.explorer.api.model.domain.token.*
-import com.crypted.explorer.api.model.domain.token.transfer.Erc1155TransferMongoDO
-import com.crypted.explorer.api.model.domain.token.transfer.Erc20TransferMongoDO
-import com.crypted.explorer.api.model.domain.token.transfer.Erc721TransferMongoDO
-import com.crypted.explorer.api.model.domain.token.transfer.TokenTransferMongoDO
-import com.crypted.explorer.api.model.domain.transaction.TransactionMongoDO
+import com.crypted.explorer.api.model.domain.transaction.transfer.TokenTransferMongoDO
 import com.crypted.explorer.api.service.token.TokenService
-import com.crypted.explorer.common.constant.AccountCode
-import com.crypted.explorer.common.constant.TokenCode
-import com.crypted.explorer.common.constant.TokenVisibility
-import com.crypted.explorer.common.constant.TokenType
+import com.crypted.explorer.common.constant.*
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.repository.MongoUtils
 import com.crypted.explorer.common.util.MathUtils
-import com.crypted.explorer.common.util.Text
-import com.crypted.explorer.gateway.model.resp.token.TokenInfoResp
 import com.crypted.explorer.gateway.model.resp.token.TokenListResp
-import com.crypted.explorer.gateway.model.resp.token.TokenTransferListResp
-import com.crypted.explorer.gateway.model.vo.token.TokenVO
-import com.crypted.explorer.gateway.model.vo.token.TokenListVO
-import com.crypted.explorer.gateway.model.vo.token.TokenTransferListVO
-import com.crypted.explorer.gateway.model.vo.token.TokenTransferVO
+import com.crypted.explorer.api.model.vo.account.TokenHoldingVO
+import com.crypted.explorer.api.model.vo.token.TokenInfoVO
+import com.crypted.explorer.api.model.vo.token.TokenListVO
+import com.crypted.explorer.api.model.vo.token.TokenVO
+import com.crypted.explorer.api.service.account.AccountService
 import com.crypted.explorer.service.account.AccountRepository
 import org.slf4j.LoggerFactory
+import org.springframework.beans.BeanUtils
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Service
-import kotlin.reflect.KClass
 
 @Service
 class TokenServiceImpl(
@@ -40,11 +30,8 @@ class TokenServiceImpl(
     private val erc20HoldRepository: Erc20HoldRepository,
     private val erc721HoldRepository: Erc721HoldRepository,
     private val erc1155HoldRepository: Erc1155HoldRepository,
-    private val erc20TransferMongoRepository: Erc20TransferMongoRepository,
-    private val erc721TransferMongoRepository: Erc721TransferMongoRepository,
-    private val erc1155TransferMongoRepository: Erc1155TransferMongoRepository,
-    private val accountRepository: AccountRepository,
-    ) : TokenService {
+    private val accountService: AccountService
+) : TokenService {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(TokenServiceImpl::class.java)
@@ -54,22 +41,22 @@ class TokenServiceImpl(
 
     private val FIELD_NAME_CREATED_AT = "createdAt"
 
-    private val FIELD_NAME_TOKEN_ADDRESS = "tokenAddress"
+//    private val FIELD_NAME_TOKEN_ADDRESS = "tokenAddress"
 
-    private val FIELD_NAME_BLOCKNUMBER = "blockNumber"
-
-    private val FIELD_NAME_LOGINDEX = "logIndex"
-
-    private val COLLECTION_NAME_ERC20_TRANSFERS = "erc20_transfers"
-
-    private val COLLECTION_NAME_ERC721_TRANSFERS = "erc1721_transfers"
-
-    private val COLLECTION_NAME_ERC1155_TRANSFERS = "erc1155_transfers"
+//    private val FIELD_NAME_BLOCKNUMBER = "blockNumber"
+//
+//    private val FIELD_NAME_LOGINDEX = "logIndex"
+//
+//    private val COLLECTION_NAME_ERC20_TRANSFERS = "erc20_transfers"
+//
+//    private val COLLECTION_NAME_ERC721_TRANSFERS = "erc1721_transfers"
+//
+//    private val COLLECTION_NAME_ERC1155_TRANSFERS = "erc1155_transfers"
 
 //    @Value("\${token.transfer.value.symbol}")
 //    private lateinit var symbol: String
 
-    override fun getTokenHoldingsByHolder(holder: String): Result<List<TokenVO>?> {
+    override fun getTokenHoldingsByHolder(holder: String): Result<List<TokenHoldingVO>?> {
 
         // EOA & GA
         // erc20 balance -> Quantity
@@ -83,12 +70,12 @@ class TokenServiceImpl(
 //        erc721HoldCountingMap?.let { mergedMap.putAll(it) }
 //        erc1155HoldCountingMap?.let { mergedMap.putAll(it) }
 
-        val tokenHoldings: List<TokenVO> = listOfNotNull(
+        val tokenHoldings: List<TokenHoldingVO> = listOfNotNull(
             // erc20
             erc20HoldDOList?.stream()?.map { erc20HoldDO ->
                 val tokenDO: TokenDO? = erc20HoldDO.tokenAddress?.let { tokenRepository.findByAddress(it) }
                 if (tokenDO != null && checkVisibility(tokenDO)) {
-                    val tokenVO = TokenVO()
+                    val tokenVO = TokenHoldingVO()
                     tokenVO.name = tokenDO.let { this.getTokenName(it) }
                     tokenVO.tokenSymbol = tokenDO.symbol
                     tokenVO.tokenBalance = erc20HoldDO.balance
@@ -120,16 +107,26 @@ class TokenServiceImpl(
         val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, FIELD_NAME_ID)
         val tokenDOList: List<TokenDO?> = tokenRepository.findAll(pageable).content
 
-        val tokenList: List<TokenListVO?> = tokenDOList.stream().filter { it?.let { checkVisibility(it) } == true }.map { tokenDO ->
-            val tokenListVO = TokenListVO()
-            tokenListVO.address = tokenDO!!.address
-            tokenListVO.symbol = tokenDO.symbol
-            tokenListVO.name = getTokenName(tokenDO)
-            tokenListVO.imageUrl = tokenDO.image
-            tokenListVO
-        }.toList()
+        val tokenList: List<TokenListVO?> =
+            tokenDOList.stream().filter { it?.let { checkVisibility(it) } == true }.map { tokenDO ->
 
-        val totalToken: Int = tokenRepository.countByIsExposedIn(listOf(TokenVisibility.ALL_VISIBLE.value, TokenVisibility.EXPLORER_VISIBLE_ONLY.value))
+                val accountVO = tokenDO!!.address?.let { accountService.getByAddress(it) }?.data
+                val tokenListVO = TokenListVO()
+                tokenListVO.address = tokenDO.address
+                tokenListVO.isContract = accountVO?.isContract
+                tokenListVO.nameTag = accountVO?.nameTag
+                tokenListVO.symbol = tokenDO.symbol
+                tokenListVO.name = getTokenName(tokenDO)
+                tokenListVO.imageUrl = tokenDO.image
+                tokenListVO
+            }.toList()
+
+        val totalToken: Int = tokenRepository.countByIsExposedIn(
+            listOf(
+                TokenVisibility.ALL_VISIBLE.value,
+                TokenVisibility.EXPLORER_VISIBLE_ONLY.value
+            )
+        )
 
         val tokenListResp = TokenListResp().apply {
             this.totalPage = MathUtils.ceilDiv(totalToken, pageSize)
@@ -140,91 +137,105 @@ class TokenServiceImpl(
         return Result.success(tokenListResp)
     }
 
-    override fun getInfoByContractAddress(address: String): Result<TokenInfoResp?> {
+    override fun getInfoByContractAddress(address: String): Result<TokenInfoVO> {
 
-        val tokenDO: TokenDO? = tokenRepository.findByAddress(address)
-        tokenDO?.let {
-            val tokenInfoResp = TokenInfoResp().apply {
-                this.name = tokenDO.let { getTokenName(it) }
-                this.symbol = tokenDO.symbol
-                this.address = tokenDO.address
-                this.totalSupply = tokenDO.supply
-                this.totalTransfer = getTotalTransfers(tokenDO)
-                this.officialSite = tokenDO.site
-                this.imageUrl = tokenDO.image
-            }
-            return Result.success(tokenInfoResp)
-        } ?: run {
+        // Contract account
+        if (accountService.checkAccountIsContract(address).data == false)
             return Result.failure(AccountCode.NOT_CONTRACT_ACCOUNT.code, AccountCode.NOT_CONTRACT_ACCOUNT.message)
+
+        val tokenDO: TokenDO = tokenRepository.findByAddress(address)
+        val accountVO = tokenDO.address?.let { accountService.getByAddress(it) }?.data
+        val tokenInfoVO = TokenInfoVO().apply {
+            this.name = getTokenName(tokenDO)
+            this.symbol = tokenDO.symbol
+            this.address = tokenDO.address
+            this.isContract = accountVO?.isContract
+            this.nameTag = accountVO?.nameTag
+            this.totalSupply = tokenDO.supply
+            this.type = tokenDO.type
+            this.officialSite = tokenDO.site
+            this.imageUrl = tokenDO.image
         }
+        return Result.success(tokenInfoVO)
     }
 
-    override fun getTransferListByPage(
-        tokenAddress: String,
-        pageNumber: Int,
-        pageSize: Int
-    ): Result<TokenTransferListResp?> {
+//    override fun getTransferListByPage(
+//        tokenAddress: String,
+//        pageNumber: Int,
+//        pageSize: Int
+//    ): Result<TokenTransferListResp?> {
+//
+//        val tokenDO: TokenDO? = tokenRepository.findByAddress(tokenAddress)
+//        tokenDO?.let {
+//            val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by(
+//                Sort.Order(Sort.Direction.DESC, FIELD_NAME_BLOCKNUMBER),
+//                Sort.Order(Sort.Direction.ASC, FIELD_NAME_LOGINDEX)
+//            ))
+//
+//            val tokenTransferMongoDOList: List<TokenTransferMongoDO> = when (tokenDO.type?.let { Text.cleanAndLowercase(it) }) {
+//                TokenType.ERC20.value -> this.findByTokenAddress(tokenAddress, pageable, Erc20TransferMongoDO::class)
+//                TokenType.ERC721.value -> this.findByTokenAddress(tokenAddress, pageable, Erc721TransferMongoDO::class)
+//                TokenType.ERC1155.value -> this.findByTokenAddress(tokenAddress, pageable, Erc1155TransferMongoDO::class)
+//                else -> emptyList()
+//            }
+//            val totalTx: Int = when (tokenDO.type?.let { Text.cleanAndLowercase(it) }) {
+//                TokenType.ERC20.value -> this.countByTokenAddress(tokenAddress, COLLECTION_NAME_ERC20_TRANSFERS)
+//                TokenType.ERC721.value -> this.countByTokenAddress(tokenAddress, COLLECTION_NAME_ERC721_TRANSFERS)
+//                TokenType.ERC1155.value -> this.countByTokenAddress(tokenAddress, COLLECTION_NAME_ERC1155_TRANSFERS)
+//                else -> 0
+//            }
+//
+//            val addressIsContractMap = getAccountIsContractMap(tokenTransferMongoDOList)
+//            val tokenTransferList: List<TokenTransferListVO?> = tokenTransferMongoDOList.stream().map { tokenTransferMongoDO ->
+//                val tokenTransferListVO = TokenTransferListVO()
+//                tokenTransferListVO.txHash = tokenTransferMongoDO.transactionHash
+//                tokenTransferListVO.method = tokenTransferMongoDO.functionName
+//                tokenTransferListVO.blockNumber = tokenTransferMongoDO.blockNumber
+//                tokenTransferListVO.blockTimestamp = tokenTransferMongoDO.blockTimestamp
+//                tokenTransferListVO.from = tokenTransferMongoDO.from
+//                tokenTransferListVO.fromIsContract = addressIsContractMap.get(tokenTransferMongoDO.from)
+//                tokenTransferListVO.to = tokenTransferMongoDO.to
+//                tokenTransferListVO.toIsContract = addressIsContractMap.get(tokenTransferMongoDO.to)
+//                tokenTransferListVO.value = tokenTransferMongoDO.value
+//                tokenTransferListVO.symbol = tokenDO.symbol
+//                tokenTransferListVO
+//            }.toList()
+//
+//            return Result.success(TokenTransferListResp().apply {
+//                this.totalPage = MathUtils.ceilDiv(totalTx, pageSize)
+//                this.totalTx = totalTx
+//                this.tokenTransferList = tokenTransferList
+//            })
+//        } ?: run {
+//            return Result.failure(TokenCode.UNKNOWN_TOKEN.code, TokenCode.UNKNOWN_TOKEN.message)
+//        }
+//    }
 
-        val tokenDO: TokenDO? = tokenRepository.findByAddress(tokenAddress)
-        tokenDO?.let {
-            val pageable: Pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by(
-                Sort.Order(Sort.Direction.DESC, FIELD_NAME_BLOCKNUMBER),
-                Sort.Order(Sort.Direction.ASC, FIELD_NAME_LOGINDEX)
-            ))
+//    override fun getTokenTransferByTxHash(txHash: String): Result<TokenTransferVO?> {
+//        val erc20TransferMongoDO: Erc20TransferMongoDO = erc20TransferMongoRepository.findByTransactionHash(txHash)
+//        val tokenDO: TokenDO? = erc20TransferMongoDO.tokenAddress?.let { tokenRepository.findByAddress(it) }
+//        val tokenTransferVO = TokenTransferVO().apply {
+//            this.txHash = erc20TransferMongoDO.transactionHash
+//            this.from = erc20TransferMongoDO.from
+//            this.to = erc20TransferMongoDO.to
+//            this.value = erc20TransferMongoDO.value
+//            this.name = tokenDO?.let { getTokenName(it) }
+//            this.symbol = tokenDO?.symbol
+//        }
+//        return Result.success(tokenTransferVO)
+//    }
 
-            val tokenTransferMongoDOList: List<TokenTransferMongoDO> = when (tokenDO.type?.let { Text.cleanAndLowercase(it) }) {
-                TokenType.ERC20.value -> this.findByTokenAddress(tokenAddress, pageable, Erc20TransferMongoDO::class)
-                TokenType.ERC721.value -> this.findByTokenAddress(tokenAddress, pageable, Erc721TransferMongoDO::class)
-                TokenType.ERC1155.value -> this.findByTokenAddress(tokenAddress, pageable, Erc1155TransferMongoDO::class)
-                else -> emptyList()
-            }
-            val totalTx: Int = when (tokenDO.type?.let { Text.cleanAndLowercase(it) }) {
-                TokenType.ERC20.value -> this.countByTokenAddress(tokenAddress, COLLECTION_NAME_ERC20_TRANSFERS)
-                TokenType.ERC721.value -> this.countByTokenAddress(tokenAddress, COLLECTION_NAME_ERC721_TRANSFERS)
-                TokenType.ERC1155.value -> this.countByTokenAddress(tokenAddress, COLLECTION_NAME_ERC1155_TRANSFERS)
-                else -> 0
-            }
-
-            val addressIsContractMap = getAccountIsContractMap(tokenTransferMongoDOList)
-            val tokenTransferList: List<TokenTransferListVO?> = tokenTransferMongoDOList.stream().map { tokenTransferMongoDO ->
-                val tokenTransferListVO = TokenTransferListVO()
-                tokenTransferListVO.txHash = tokenTransferMongoDO.transactionHash
-                tokenTransferListVO.method = tokenTransferMongoDO.functionName
-                tokenTransferListVO.blockNumber = tokenTransferMongoDO.blockNumber
-                tokenTransferListVO.blockTimestamp = tokenTransferMongoDO.blockTimestamp
-                tokenTransferListVO.from = tokenTransferMongoDO.from
-                tokenTransferListVO.fromIsContract = addressIsContractMap.get(tokenTransferMongoDO.from)
-                tokenTransferListVO.to = tokenTransferMongoDO.to
-                tokenTransferListVO.toIsContract = addressIsContractMap.get(tokenTransferMongoDO.to)
-                tokenTransferListVO.value = tokenTransferMongoDO.value
-                tokenTransferListVO.symbol = tokenDO.symbol
-                tokenTransferListVO
-            }.toList()
-
-            return Result.success(TokenTransferListResp().apply {
-                this.totalPage = MathUtils.ceilDiv(totalTx, pageSize)
-                this.totalTx = totalTx
-                this.tokenTransferList = tokenTransferList
-            })
-        } ?: run {
-            return Result.failure(TokenCode.UNKNOWN_TOKEN.code, TokenCode.UNKNOWN_TOKEN.message)
+    override fun getByAddress(address: String): Result<TokenVO> {
+        val tokenDO = tokenRepository.findByAddress(address)
+        return if (tokenDO != null) {
+            val tokenVO = TokenVO()
+            BeanUtils.copyProperties(tokenDO, tokenVO)
+            tokenVO.name = getTokenName(tokenDO)
+            Result.success(tokenVO)
+        } else {
+            Result.failure(TokenCode.UNKNOWN_TOKEN.code)
         }
     }
-
-    override fun getTokenInfoByTxHash(txHash: String): Result<TokenTransferVO?> {
-        val erc20TransferMongoDO: Erc20TransferMongoDO = erc20TransferMongoRepository.findByTransactionHash(txHash)
-        val tokenDO: TokenDO? = erc20TransferMongoDO.tokenAddress?.let { tokenRepository.findByAddress(it) }
-        val tokenTransferVO = TokenTransferVO().apply {
-            this.txHash = erc20TransferMongoDO.transactionHash
-            this.from = erc20TransferMongoDO.from
-            this.to = erc20TransferMongoDO.to
-            this.value = erc20TransferMongoDO.value
-            this.name = tokenDO?.let { getTokenName(it) }
-            this.symbol = tokenDO?.symbol
-        }
-        return Result.success(tokenTransferVO)
-    }
-
 
 
     private fun getTokenName(tokenDO: TokenDO): String? {
@@ -234,46 +245,38 @@ class TokenServiceImpl(
         return contractId?.let { contractRepository.findById(it).get().name }
     }
 
-    private fun getTotalTransfers(tokenDO: TokenDO): Int? {
+//    private fun getTotalTransfers(tokenDO: TokenDO): Int? {
+//
+//        val type = tokenDO.type?.let { Text.cleanAndLowercase(it) }
+//        val address = tokenDO.address
+//
+//        return when (type) {
+//            TokenType.ERC20.value -> address?.let { erc20TransferMongoRepository.countByTokenAddress(it) }
+//            TokenType.ERC721.value -> address?.let { erc721TransferMongoRepository.countByTokenAddress(it) }
+//            TokenType.ERC1155.value -> address?.let { erc1155TransferMongoRepository.countByTokenAddress(it) }
+//            else -> 0
+//        }
+//    }
 
-        val type = tokenDO.type?.let { Text.cleanAndLowercase(it) }
-        val address = tokenDO.address
-
-        return when (type) {
-            TokenType.ERC20.value -> address?.let { erc20TransferMongoRepository.countByTokenAddress(it) }
-            TokenType.ERC721.value -> address?.let { erc721TransferMongoRepository.countByTokenAddress(it) }
-            TokenType.ERC1155.value -> address?.let { erc1155TransferMongoRepository.countByTokenAddress(it) }
-            else -> 0
-        }
-    }
-
-    private fun <T : Any> findByTokenAddress(
-        tokenAddress: String,
-        pageable: Pageable,
-        entityType: KClass<T>
-    ): List<T> {
-        val criteriaList = mutableListOf<Criteria>()
-        criteriaList.add(Criteria.where(FIELD_NAME_TOKEN_ADDRESS).`is`(tokenAddress))
-        return mongoUtils.getByPage(pageable, entityType, criteriaList)
-    }
-
-    private fun countByTokenAddress(tokenAddress: String, collectionName: String): Int {
-        val criteriaList = mutableListOf<Criteria>()
-        criteriaList.add(Criteria.where(FIELD_NAME_TOKEN_ADDRESS).`is`(tokenAddress))
-        return mongoUtils.getCountWithNativeQuery(collectionName, criteriaList)
-    }
+//    private fun <T : Any> findByTokenAddress(
+//        tokenAddress: String,
+//        pageable: Pageable,
+//        entityType: KClass<T>
+//    ): List<T> {
+//        val criteriaList = mutableListOf<Criteria>()
+//        criteriaList.add(Criteria.where(FIELD_NAME_TOKEN_ADDRESS).`is`(tokenAddress))
+//        return mongoUtils.getByPage(pageable, entityType, criteriaList)
+//    }
+//
+//    private fun countByTokenAddress(tokenAddress: String, collectionName: String): Int {
+//        val criteriaList = mutableListOf<Criteria>()
+//        criteriaList.add(Criteria.where(FIELD_NAME_TOKEN_ADDRESS).`is`(tokenAddress))
+//        return mongoUtils.getCountWithNativeQuery(collectionName, criteriaList)
+//    }
 
     private fun checkVisibility(tokenDO: TokenDO): Boolean {
         return tokenDO.isExposed.equals(TokenVisibility.ALL_VISIBLE.value, ignoreCase = true)
                 || tokenDO.isExposed.equals(TokenVisibility.EXPLORER_VISIBLE_ONLY.value, ignoreCase = true)
     }
 
-    private fun getAccountIsContractMap(tokenTransferMongoDOList: List<TokenTransferMongoDO>): Map<String, Boolean> {
-        val addressList = tokenTransferMongoDOList.flatMap { listOf(it.from, it.to) }
-            .filterNotNull()
-            .distinct()
-        val addressDOList = accountRepository.findByAddressIn(addressList)
-
-        return addressDOList.associate { it.address!! to (it.isContract == 1) }
-    }
 }

@@ -1,4 +1,4 @@
-package com.crypted.explorer.api.model.domain.token.transfer
+package com.crypted.explorer.api.model.domain.transaction.transfer
 
 import org.springframework.data.mongodb.core.mapping.Document
 

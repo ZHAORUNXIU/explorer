@@ -1,4 +1,4 @@
-package com.crypted.explorer.gateway.model.vo.block
+package com.crypted.explorer.api.model.vo.block
 
 import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable

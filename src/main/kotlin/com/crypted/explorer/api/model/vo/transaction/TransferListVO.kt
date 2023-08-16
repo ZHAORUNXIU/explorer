@@ -1,5 +1,6 @@
-package com.crypted.explorer.gateway.model.vo.token
+package com.crypted.explorer.api.model.vo.transaction
 
+import com.crypted.explorer.api.model.vo.account.AccountVO
 import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable
 
@@ -12,14 +13,10 @@ class TokenTransferListVO : Serializable {
     var blockNumber: Long? = 0L
     @Schema(description = "blockTimestamp", type = "integer", format = "second")
     var blockTimestamp: Long? = 0
-    @Schema(description = "from", type = "string")
-    var from: String? = null
-    @Schema(description = "fromIsContract", type = "boolean", example = "true")
-    var fromIsContract: Boolean? = null
-    @Schema(description = "to", type = "string")
-    var to: String? = null
-    @Schema(description = "toIsContract", type = "boolean", example = "true")
-    var toIsContract: Boolean? = null
+    @Schema(description = "fromAccount", type = "com.crypted.explorer.api.model.vo.account.AccountVO")
+    var from: AccountVO? = null
+    @Schema(description = "toAccount", type = "com.crypted.explorer.api.model.vo.account.AccountVO")
+    var to: AccountVO? = null
     @Schema(description = "value", type = "string")
     var value: String? = null
     @Schema(description = "symbol", type = "string")

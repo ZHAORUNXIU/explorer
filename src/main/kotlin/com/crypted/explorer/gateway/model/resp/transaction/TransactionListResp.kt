@@ -1,6 +1,6 @@
 package com.crypted.explorer.gateway.model.resp.transaction
 
-import com.crypted.explorer.gateway.model.vo.transaction.TransactionListVO
+import com.crypted.explorer.api.model.vo.transaction.TransactionListVO
 import io.swagger.v3.oas.annotations.media.Schema
 
 import java.io.Serializable

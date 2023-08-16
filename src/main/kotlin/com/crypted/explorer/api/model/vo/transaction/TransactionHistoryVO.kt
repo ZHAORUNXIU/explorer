@@ -1,4 +1,4 @@
-package com.crypted.explorer.gateway.model.vo.transaction
+package com.crypted.explorer.api.model.vo.transaction
 
 import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable

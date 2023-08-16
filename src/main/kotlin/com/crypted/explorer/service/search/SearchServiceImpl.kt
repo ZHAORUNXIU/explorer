@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import javax.annotation.Resource
 
 @Service
-class SearchServiceImpl(private val accountService: AccountService) : SearchService {
+class SearchServiceImpl(private val accountService:AccountService) : SearchService {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(SearchServiceImpl::class.java)

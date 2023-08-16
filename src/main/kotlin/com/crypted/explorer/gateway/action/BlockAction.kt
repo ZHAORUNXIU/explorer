@@ -1,6 +1,9 @@
 package com.crypted.explorer.gateway.action
 
+import com.crypted.explorer.api.model.vo.block.BlockInfoVO
+import com.crypted.explorer.api.model.vo.token.TokenVO
 import com.crypted.explorer.api.service.block.BlockService
+import com.crypted.explorer.api.service.transaction.TransactionService
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Log
 import com.crypted.explorer.gateway.model.resp.block.BlockInfoResp
@@ -12,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
+import org.springframework.beans.BeanUtils
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
@@ -24,7 +28,9 @@ import javax.validation.constraints.NotNull
 @Validated
 @Component
 @Tag(name = "Block Service API", description = "API endpoints related to block operations")
-class BlockAction(private val blockService: BlockService)  {
+class BlockAction(
+    private val blockService: BlockService,
+    private val transactionService: TransactionService)  {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(BlockAction::class.java)
@@ -60,8 +66,12 @@ class BlockAction(private val blockService: BlockService)  {
 
         LOG.info(Log.format("success", Log.kv("api", "block/")))
 
-        val result: Result<BlockInfoResp?> = blockService.getInfoByBlockNumber(blockNumber)
+        val result: Result<BlockInfoVO?> = blockService.getInfoByBlockNumber(blockNumber)
 
-        return Result.success(result.data)
+        val blockInfoResp = BlockInfoResp()
+        result.data?.let { BeanUtils.copyProperties(it, blockInfoResp) }
+        blockInfoResp.txCount = transactionService.getTransactionAmountByBlockNumber(blockNumber.toLong()).data
+
+        return Result.success(blockInfoResp)
     }
 }

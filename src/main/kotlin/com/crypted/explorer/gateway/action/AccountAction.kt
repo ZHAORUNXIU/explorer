@@ -1,6 +1,9 @@
 package com.crypted.explorer.gateway.action
 
+import com.crypted.explorer.api.model.vo.account.AccountInfoVO
+import com.crypted.explorer.api.model.vo.account.TokenHoldingVO
 import com.crypted.explorer.api.service.account.AccountService
+import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Log
 import com.crypted.explorer.gateway.model.resp.account.AccountInfoResp
@@ -12,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
+import org.springframework.beans.BeanUtils
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
@@ -23,7 +27,9 @@ import javax.validation.constraints.NotNull
 @Validated
 @Component
 @Tag(name = "Account Service API", description = "API endpoints related to account operations")
-class AccountAction(private val accountService: AccountService) {
+class AccountAction(
+    private val accountService: AccountService,
+    private val tokenService: TokenService) {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(AccountAction::class.java)
@@ -66,9 +72,16 @@ class AccountAction(private val accountService: AccountService) {
 //        if (accountService!!.checkAccountIsContract(address).data == true)
 //            return Result.failure(AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.code, AccountCode.NOT_EXTERNALLY_OWNED_ACCOUNT.message)
 
-        val result: Result<AccountInfoResp?> = accountService.getInfoByAddress(address)
+        val accountInfoVO: AccountInfoVO? = accountService.getInfoByAddress(address).data
 
-        return Result.success(result.data)
+        val tokenHoldings: List<TokenHoldingVO>? = tokenService.getTokenHoldingsByHolder(address).data
+
+        val accountInfoResp = AccountInfoResp()
+        accountInfoVO?.let { BeanUtils.copyProperties(it, accountInfoResp) }
+        accountInfoResp.tokenCount = tokenHoldings?.size
+        accountInfoResp.tokenHoldings = tokenHoldings
+
+        return Result.success(accountInfoResp)
     }
 
 }

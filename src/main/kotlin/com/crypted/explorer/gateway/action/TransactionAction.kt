@@ -3,10 +3,12 @@ package com.crypted.explorer.gateway.action
 import com.crypted.explorer.api.service.transaction.TransactionService
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.Log
+import com.crypted.explorer.gateway.model.resp.transaction.TokenTransferListResp
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionInfoResp
 import com.crypted.explorer.gateway.model.resp.transaction.TransactionListResp
-import com.crypted.explorer.gateway.model.resp.transaction.TransactionTokenInfoResp
-import com.crypted.explorer.gateway.model.vo.transaction.TransactionHistoryVO
+import com.crypted.explorer.gateway.model.resp.transaction.TokenTransferredVO
+import com.crypted.explorer.api.model.vo.transaction.TransactionHistoryVO
+import com.crypted.explorer.api.service.token.TokenService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
+import java.security.PrivateKey
 import javax.validation.constraints.Max
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotNull
@@ -72,18 +75,20 @@ class TransactionAction(private val transactionService: TransactionService)  {
     }
 
     @GetMapping("/{txHash}/token")
-    @Operation(summary = "Get token info by txHash", description = "Get the token of the transaction based the provided txHash")
+    @Operation(summary = "Get token transfer by txHash", description = "Get the token of the transaction based the provided txHash")
     @ApiResponse(responseCode = "200", description = "Success")
     @ApiResponse(responseCode = "404", description = "Resource Not Found", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
     @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
-    fun getTokenInfoByTxHash(@Parameter(description = "txHash", required = true) @PathVariable("txHash") @NotNull txHash: String): Result<TransactionTokenInfoResp?> {
+    fun getTokenTransferredByTxHash(@Parameter(description = "txHash", required = true) @PathVariable("txHash") @NotNull txHash: String): Result<TokenTransferredVO?> {
 
         LOG.info(Log.format("success", Log.kv("api", "transaction/$txHash/token")))
 
-        val result: Result<TransactionTokenInfoResp?> = transactionService.getTokenInfoByTxHash(txHash)
+        val result: Result<TokenTransferredVO?> = transactionService.getTokenTransferredByTxHash(txHash)
+        if (!result.isSuccess())
+            return Result.failure(result)
 
         return Result.success(result.data)
     }
@@ -103,4 +108,22 @@ class TransactionAction(private val transactionService: TransactionService)  {
         return Result.success(result.data)
     }
 
+    @GetMapping("/transfers")
+    @Operation(summary = "Get transfer list", description = "Retrieve transfer list based on the provided conditions")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "404", description = "Resource Not Found", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "500", description = "System Error", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "501", description = "Invalid Request", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "502", description = "Invalid Parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    @ApiResponse(responseCode = "504", description = "Missing parameter", content = [Content(schema = Schema(implementation = Result::class))])
+    fun getTransferList(@Parameter(description = "tokenAddress", required = true,) @RequestParam(required = true) @NotNull tokenAddress: String,
+                        @Parameter(description = "pageNumber", required = true) @RequestParam(required = true) @NotNull @Min(1) pageNumber: Int,
+                        @Parameter(description = "pageSize", required = true) @RequestParam(required = true) @NotNull @Min(0) pageSize: Int): Result<TokenTransferListResp?> {
+
+        LOG.info(Log.format("success", Log.kv("api", "transaction/transfers")))
+
+        val result: Result<TokenTransferListResp?> = transactionService.getTransferListByTokenAddress(tokenAddress, pageNumber, pageSize)
+
+        return Result.success(result.data)
+    }
 }

@@ -1,6 +1,6 @@
 package com.crypted.explorer.gateway.model.resp.block
 
-import com.crypted.explorer.gateway.model.vo.block.BlockListVO
+import com.crypted.explorer.api.model.vo.block.BlockListVO
 import io.swagger.v3.oas.annotations.media.Schema
 
 import java.io.Serializable

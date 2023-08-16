@@ -1,13 +1,9 @@
-package com.crypted.explorer.gateway.model.vo.account
+package com.crypted.explorer.api.model.vo.account
 
 import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable
 
-class AccountRankingVO : Serializable {
-    @Schema(description = "address", type = "String")
-    var address: String? = null
-    @Schema(description = "isContract", type = "boolean", example = "true")
-    var isContract: Boolean? = null
+class AccountRankingVO: AccountVO(), Serializable {
     @Schema(description = "balance", type = "String", format = "wei")
     var balance: String? = null
     @Schema(description = "symbol", type = "String")

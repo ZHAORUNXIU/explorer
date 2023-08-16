@@ -1,6 +1,6 @@
 package com.crypted.explorer.gateway.model.resp.token
 
-import com.crypted.explorer.gateway.model.vo.token.TokenListVO
+import com.crypted.explorer.api.model.vo.token.TokenListVO
 import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable
 

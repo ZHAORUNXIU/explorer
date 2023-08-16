@@ -1,5 +1,6 @@
 package com.crypted.explorer.gateway.model.resp.transaction
 
+import com.crypted.explorer.api.model.vo.account.AccountVO
 import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable
 
@@ -10,10 +11,10 @@ class TransactionInfoResp : Serializable {
     var blockNumber: Long? = 0L
     @Schema(description = "blockTimestamp", type = "integer", format = "second")
     var blockTimestamp: Long? = 0
-    @Schema(description = "from", type = "string")
-    var from: String? = null
-    @Schema(description = "to", type = "string")
-    var to: String? = null
+    @Schema(description = "fromAccount", type = "com.crypted.explorer.api.model.vo.account.AccountVO")
+    var from: AccountVO? = null
+    @Schema(description = "toAccount", type = "com.crypted.explorer.api.model.vo.account.AccountVO")
+    var to: AccountVO? = null
     @Schema(description = "value", type = "string", format = "wei")
     var value: String? = null
     @Schema(description = "txFee", type = "string", format = "wei")

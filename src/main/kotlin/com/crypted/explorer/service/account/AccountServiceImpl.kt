@@ -1,16 +1,18 @@
 package com.crypted.explorer.service.account
 
 import com.crypted.explorer.api.model.domain.account.AccountDO
+import com.crypted.explorer.api.model.domain.transaction.transfer.TokenTransferMongoDO
+import com.crypted.explorer.api.model.vo.account.AccountInfoVO
+import com.crypted.explorer.api.model.vo.account.AccountVO
 import com.crypted.explorer.api.service.account.AccountService
 import com.crypted.explorer.api.service.block.BlockService
 import com.crypted.explorer.api.service.token.TokenService
 import com.crypted.explorer.common.model.Result
 import com.crypted.explorer.common.util.MathUtils
-import com.crypted.explorer.gateway.action.AccountAction
 import com.crypted.explorer.gateway.model.resp.account.AccountInfoResp
 import com.crypted.explorer.gateway.model.resp.account.AccountRankingResp
-import com.crypted.explorer.gateway.model.vo.account.AccountRankingVO
-import com.crypted.explorer.gateway.model.vo.token.TokenVO
+import com.crypted.explorer.api.model.vo.account.AccountRankingVO
+import com.crypted.explorer.api.model.vo.account.TokenHoldingVO
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
@@ -23,7 +25,6 @@ import java.math.MathContext
 @Service
 class AccountServiceImpl(
     private val accountRepository: AccountRepository,
-    private val tokenService: TokenService,
     private val blockService: BlockService
 ) : AccountService {
 
@@ -46,6 +47,7 @@ class AccountServiceImpl(
             val accountRankingVO = AccountRankingVO()
             accountRankingVO.address = accountDO?.address
             accountRankingVO.isContract = accountDO?.isContract == 1
+            accountRankingVO.nameTag = accountDO?.publicNameTag
             accountRankingVO.balance = accountDO?.balance
             accountRankingVO.symbol = this@AccountServiceImpl.symbol
 //            accountRankingVO.percentage = (totalBlockReward?.let { accountDO?.balance?.toDouble()?.div(it) }?.times(100)).toString()
@@ -71,22 +73,19 @@ class AccountServiceImpl(
         return Result.success(accountRankingResp)
     }
 
-    override fun getInfoByAddress(address: String): Result<AccountInfoResp?> {
+    override fun getInfoByAddress(address: String): Result<AccountInfoVO?> {
 
         val accountDO: AccountDO = accountRepository.findByAddress(address)
 
-        val tokenHoldings: List<TokenVO>? = tokenService.getTokenHoldingsByHolder(address).data
-
-        val accountInfoResp = AccountInfoResp().apply {
+        val accountInfoVO = AccountInfoVO().apply {
             this.address = accountDO.address
             this.balance = accountDO.balance
             this.symbol = this@AccountServiceImpl.symbol
-            this.tokenCount = tokenHoldings?.size
             this.isContract = accountDO.isContract == 1
-            this.tokenHoldings = tokenHoldings
+            this.nameTag = accountDO.publicNameTag
         }
 
-        return Result.success(accountInfoResp)
+        return Result.success(accountInfoVO)
     }
 
     override fun checkAccountIsContract(address: String): Result<Boolean> {
@@ -98,5 +97,18 @@ class AccountServiceImpl(
 //        val addressDOList = accountRepository.findByAddressIn(addressList)
 //        return Result.success(addressDOList.associate { it.address!! to (it.isContract == 1) })
 //    }
+
+    override fun getByAddress(address: String): Result<AccountVO?> {
+
+        val accountDO: AccountDO = accountRepository.findByAddress(address)
+
+        val accountVO = AccountVO().apply {
+            this.address = accountDO.address
+            this.isContract = accountDO.isContract == 1
+            this.nameTag = accountDO.publicNameTag
+        }
+
+        return Result.success(accountVO)
+    }
 
 }
